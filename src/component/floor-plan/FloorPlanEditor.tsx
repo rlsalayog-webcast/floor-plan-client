@@ -2,12 +2,12 @@ import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import React, { useContext, useRef, useState } from "react";
 import { Circle, Group, Layer, Rect, Stage, Text } from "react-konva";
-import { getDragBoundFunc } from "../helper/floor-plan";
-import { useDragWithCollision } from "../hook/useDragWithCollision";
-import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
-import type { FloorPlanElement } from "../types/FloorPlan";
-import type { ISelect } from "./LandmarkDetailsModal";
-import GridLinesBg from "./floor-plan/GridLinesBg";
+import { getDragBoundFunc } from "../../helper/floor-plan";
+import { useDragWithCollision } from "../../hook/useDragWithCollision";
+import { DrawerVisibilityContext } from "../../store/context/DrawerVisibilityContext";
+import type { FloorPlanElement } from "../../types/FloorPlan";
+import type { ISelect } from "../LandmarkDetailsModal";
+import GridLinesBg from "./GridLinesBg";
 
 const FloorPlanEditor = ({
     elements,

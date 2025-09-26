@@ -4,7 +4,7 @@ import { dummyElements } from "../constant/data";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../types/FloorPlan";
 import CustomActionButtons from "./CustomActionButtons";
-import FloorPlanEditor from "./FloorPlanEditor";
+import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
 
 export type ISelect = "select" | "rectangle" | "circle" | "triangle";
 
