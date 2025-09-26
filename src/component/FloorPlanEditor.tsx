@@ -1,12 +1,13 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import React, { useContext, useRef, useState } from "react";
-import { Circle, Group, Layer, Line, Rect, Stage, Text } from "react-konva";
+import { Circle, Group, Layer, Rect, Stage, Text } from "react-konva";
 import { getDragBoundFunc } from "../helper/floor-plan";
 import { useDragWithCollision } from "../hook/useDragWithCollision";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../types/FloorPlan";
 import type { ISelect } from "./LandmarkDetailsModal";
+import GridLinesBg from "./floor-plan/GridLinesBg";
 
 const FloorPlanEditor = ({
     elements,
@@ -88,23 +89,7 @@ const FloorPlanEditor = ({
             }}
         >
             <Layer>
-                {/* Grid lines */}
-                {Array.from({ length: 50 }, (_, i) => (
-                    <React.Fragment key={`grid-${i}`}>
-                        <Line
-                            points={[i * 40, 0, i * 40, 2000]}
-                            stroke="hsl(var(--grid-color))"
-                            strokeWidth={0.5}
-                            opacity={0.3}
-                        />
-                        <Line
-                            points={[0, i * 40, 2000, i * 40]}
-                            stroke="hsl(var(--grid-color))"
-                            strokeWidth={0.5}
-                            opacity={0.3}
-                        />
-                    </React.Fragment>
-                ))}
+                <GridLinesBg width={1000} height={520} cellSize={25} />
 
                 {/* Floor plan elements */}
                 {elements.map((element) => {
