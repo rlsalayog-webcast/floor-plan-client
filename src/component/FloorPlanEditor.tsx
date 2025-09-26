@@ -1,26 +1,67 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import React, { useRef, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { Circle, Group, Layer, Line, Rect, Stage, Text } from "react-konva";
-import { dummyElements } from "../constant/data";
 import { getDragBoundFunc } from "../helper/floor-plan";
 import { useDragWithCollision } from "../hook/useDragWithCollision";
+import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../types/FloorPlan";
+import type { ISelect } from "./LandmarkDetailsModal";
 
-const FloorPlanEditor = () => {
+const FloorPlanEditor = ({
+    elements,
+    setElements,
+    selectedTool,
+    setSelectedTool,
+}: {
+    elements: FloorPlanElement[];
+    setElements: React.Dispatch<React.SetStateAction<FloorPlanElement[]>>;
+    selectedTool: ISelect;
+    setSelectedTool: React.Dispatch<React.SetStateAction<ISelect>>;
+}) => {
+    const { edit, id } = useContext(DrawerVisibilityContext);
     const [selectedElement, setSelectedElement] = useState<FloorPlanElement | null>(null);
     const stageRef = useRef<Konva.Stage>(null);
-    const [elements, setElements] = useState<FloorPlanElement[]>(dummyElements);
     const { getDragMoveHandler } = useDragWithCollision();
 
+    /**
+     * To add new shapes
+     */
+    const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
+        const stage = e.target.getStage();
+        const pos = stage?.getPointerPosition();
+
+        if (!pos) return;
+
+        if (selectedTool !== "select") {
+            const newElement: FloorPlanElement = {
+                id: `element-${Date.now()}`,
+                type: selectedTool,
+                x: pos.x,
+                y: pos.y,
+                width: selectedTool === "rectangle" ? 100 : undefined,
+                height: selectedTool === "rectangle" ? 80 : undefined,
+                radius: selectedTool === "circle" ? 50 : undefined,
+                fill: "#00bcd4",
+                attributes: {
+                    name: `${selectedTool} ${elements.length + 1}`,
+                    description: `A ${selectedTool} element`,
+                },
+            };
+
+            setElements([...elements, newElement]);
+            setSelectedTool("select");
+        }
+    };
+
     const handleElementClick = (element: FloorPlanElement) => {
-        console.log("element >> ", element);
+        id.setValue(element.id);
         setSelectedElement(element);
     };
 
     const handleMouseOver = (e: KonvaEventObject<MouseEvent>) => {
         const stage = e.target.getStage();
-        if (stage) {
+        if (stage && edit.visible) {
             stage.container().style.cursor = "move";
         }
     };
@@ -37,10 +78,12 @@ const FloorPlanEditor = () => {
             ref={stageRef}
             width={1000}
             height={520}
+            onClick={handleStageClick}
             onMouseDown={(e) => {
                 // deselect the shape when clicking on empty space
                 if (e.target === e.target.getStage()) {
                     setSelectedElement(null);
+                    id.setValue(null);
                 }
             }}
         >
@@ -73,7 +116,7 @@ const FloorPlanEditor = () => {
                                 <Group
                                     x={element.x}
                                     y={element.y}
-                                    draggable
+                                    draggable={edit.visible}
                                     onClick={() => handleElementClick(element)}
                                     onDragEnd={(e) => {
                                         const updatedElements = elements.map((el) =>
@@ -87,7 +130,10 @@ const FloorPlanEditor = () => {
                                         );
                                         setElements(updatedElements);
                                     }}
-                                    onDragMove={getDragMoveHandler(element, elements)}
+                                    onDragMove={(e) => {
+                                        handleElementClick(element);
+                                        getDragMoveHandler(element, elements)(e);
+                                    }}
                                     dragBoundFunc={getDragBoundFunc(element, stageRef)}
                                     onMouseOver={handleMouseOver}
                                     onMouseOut={handleMouseOut}
@@ -98,6 +144,7 @@ const FloorPlanEditor = () => {
                                         fill={isSelected ? "gray" : element.fill}
                                         stroke={"black"}
                                         strokeWidth={1}
+                                        strokeScaleEnabled={false}
                                     />
                                     <Text
                                         align="center"
@@ -119,7 +166,7 @@ const FloorPlanEditor = () => {
                                 key={element.id}
                                 x={element.x}
                                 y={element.y}
-                                draggable
+                                draggable={edit.visible}
                                 onClick={() => handleElementClick(element)}
                                 onDragEnd={(e) => {
                                     const updatedElements = elements.map((el) =>
@@ -133,7 +180,10 @@ const FloorPlanEditor = () => {
                                     );
                                     setElements(updatedElements);
                                 }}
-                                onDragMove={getDragMoveHandler(element, elements)}
+                                onDragMove={(e) => {
+                                    handleElementClick(element);
+                                    getDragMoveHandler(element, elements)(e);
+                                }}
                                 dragBoundFunc={getDragBoundFunc(element, stageRef)}
                                 onMouseOver={handleMouseOver}
                                 onMouseOut={handleMouseOut}
@@ -143,6 +193,7 @@ const FloorPlanEditor = () => {
                                     fill={isSelected ? "gray" : element.fill}
                                     stroke={"black"}
                                     strokeWidth={1}
+                                    strokeScaleEnabled={false}
                                 />
                                 <Text
                                     text={element.attributes.name}
