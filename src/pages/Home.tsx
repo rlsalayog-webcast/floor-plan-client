@@ -1,13 +1,15 @@
 import { Map } from "@vis.gl/react-google-maps";
-import { useContext } from "react";
+import { useContext, useState } from "react";
+import FloorDetailsFormDrawer from "../component/floor-plan/FloorDetailsForm";
+import FloorPlanModal from "../component/FloorPlanModal";
 import ClusteredLocationMarkers from "../component/google-maps/ClusteredLocationMarkers";
-import LandmarkDetailsModal from "../component/LandmarkDetailsModal";
 import { dummyLocations } from "../constant/data";
 import { MANILA_POSITION } from "../constant/mapPosition";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 
 const Home = () => {
     const { view } = useContext(DrawerVisibilityContext);
+    const [isEditDetailsVisible, setIsEditDetailsVisible] = useState(false);
 
     return (
         <>
@@ -32,7 +34,14 @@ const Home = () => {
                     />
                 </Map>
             </div>
-            <LandmarkDetailsModal />
+            <FloorPlanModal
+                isEditDetailsVisible={isEditDetailsVisible}
+                setIsEditDetailsVisible={setIsEditDetailsVisible}
+            />
+            <FloorDetailsFormDrawer
+                isEditDetailsVisible={isEditDetailsVisible}
+                setIsEditDetailsVisible={setIsEditDetailsVisible}
+            />
         </>
     );
 };

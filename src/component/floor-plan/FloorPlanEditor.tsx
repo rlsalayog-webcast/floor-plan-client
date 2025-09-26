@@ -6,7 +6,7 @@ import { getDragBoundFunc } from "../../helper/floor-plan";
 import { useDragWithCollision } from "../../hook/useDragWithCollision";
 import { DrawerVisibilityContext } from "../../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../../types/FloorPlan";
-import type { ISelect } from "../LandmarkDetailsModal";
+import type { ISelect } from "../FloorPlanModal";
 import GridLinesBg from "./GridLinesBg";
 
 interface IFloorPlanEditor {

@@ -8,7 +8,13 @@ import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
 
 export type ISelect = "select" | "rectangle" | "circle" | "triangle";
 
-const LandmarkDetailsModal = () => {
+const FloorPlanModal = ({
+    isEditDetailsVisible,
+    setIsEditDetailsVisible,
+}: {
+    isEditDetailsVisible: boolean;
+    setIsEditDetailsVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
     const { view, edit, id } = useContext(DrawerVisibilityContext);
     const [elements, setElements] = useState<FloorPlanElement[]>(dummyElements);
     const [selectedTool, setSelectedTool] = useState<ISelect>("select");
@@ -65,7 +71,15 @@ const LandmarkDetailsModal = () => {
                             <Radio.Button value="triangle">Triangle</Radio.Button>
                         </Radio.Group>
                     )}
-                    <Card title="Details">
+                    <Card
+                        title="Details"
+                        extra={
+                            <CustomActionButtons
+                                actions={edit.visible && id.value ? ["edit"] : []}
+                                handleEdit={() => setIsEditDetailsVisible(true)}
+                            />
+                        }
+                    >
                         <p>
                             Title: <span className="font-semibold">{data?.attributes.name}</span>
                         </p>
@@ -77,4 +91,4 @@ const LandmarkDetailsModal = () => {
     );
 };
 
-export default LandmarkDetailsModal;
+export default FloorPlanModal;
