@@ -29,14 +29,14 @@ const FloorPlanModal = ({
             onCancel={() => view.setVisible(false)}
             footer={null}
         >
-            <div className="min-h-96 grid grid-cols-[2fr_1fr] gap-10">
+            <div className="grid grid-cols-3 gap-10">
                 <FloorPlanEditor
                     elements={elements}
                     setElements={setElements}
                     selectedTool={selectedTool}
                     setSelectedTool={setSelectedTool}
                 />
-                <div>
+                <div className="col-span-1">
                     <div className="flex justify-between">
                         <CustomActionButtons
                             actions={edit.visible ? ["edit", "delete"] : ["edit"]}
