@@ -21,6 +21,21 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
     const stageRef = useRef<Konva.Stage>(null);
     const [selectedElement, setSelectedElement] = useState<FloorPlanElement | null>(null);
 
+    const bringToFront = (elementId: string) => {
+        dataSet.setValue((prev: FloorPlanElement[]) => {
+            const elementIndex = prev.findIndex((el) => el.id === elementId);
+            if (elementIndex === -1) {
+                return prev;
+            }
+
+            const newArray = [...prev];
+            const [element] = newArray.splice(elementIndex, 1);
+            newArray.push(element);
+
+            return newArray;
+        });
+    };
+
     /**
      * To add new shapes
      */
@@ -55,6 +70,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
     const handleElementClick = (element: FloorPlanElement) => {
         id.setValue(element.id);
         setSelectedElement(element);
+        bringToFront(element.id);
     };
 
     const handleOnDragEnd = (e: KonvaEventObject<DragEvent>, element: FloorPlanElement) => {
@@ -114,6 +130,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                                         y={element.y}
                                         draggable={edit.visible}
                                         onClick={() => handleElementClick(element)}
+                                        onDragStart={() => bringToFront(element.id)}
                                         onDragEnd={(e) => handleOnDragEnd(e, element)}
                                         onDragMove={(e) => {
                                             handleElementClick(element);
@@ -136,7 +153,8 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                                                 <Rect
                                                     width={element.width!}
                                                     height={element.height!}
-                                                    fill={isSelected ? "gray" : element.fill}
+                                                    fill={element.fill}
+                                                    opacity={isSelected ? 0.7 : 1}
                                                     stroke={"black"}
                                                     strokeWidth={1}
                                                     strokeScaleEnabled={false}
@@ -155,7 +173,8 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                                             <>
                                                 <Circle
                                                     radius={element.radius!}
-                                                    fill={isSelected ? "gray" : element.fill}
+                                                    fill={element.fill}
+                                                    opacity={isSelected ? 0.7 : 1}
                                                     stroke={"black"}
                                                     strokeWidth={1}
                                                     strokeScaleEnabled={false}

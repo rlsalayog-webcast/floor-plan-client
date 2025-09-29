@@ -38,6 +38,7 @@ const FloorPlanModal = ({
             open={view.visible || edit.visible}
             onCancel={onClose}
             footer={null}
+            destroyOnHidden // force re-mount to reset the states
         >
             <div className="grid grid-cols-3 gap-10">
                 <FloorPlanEditor selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
