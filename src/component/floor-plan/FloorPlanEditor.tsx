@@ -10,19 +10,12 @@ import type { ISelect } from "../FloorPlanModal";
 import GridLinesBg from "./GridLinesBg";
 
 interface IFloorPlanEditor {
-    elements: FloorPlanElement[];
-    setElements: React.Dispatch<React.SetStateAction<FloorPlanElement[]>>;
     selectedTool: ISelect;
     setSelectedTool: React.Dispatch<React.SetStateAction<ISelect>>;
 }
 
-const FloorPlanEditor = ({
-    elements,
-    setElements,
-    selectedTool,
-    setSelectedTool,
-}: IFloorPlanEditor) => {
-    const { edit, id } = useContext(DrawerVisibilityContext);
+const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) => {
+    const { edit, id, dataSet } = useContext(DrawerVisibilityContext);
     const { stageSize, containerRef } = useResponsiveStageSize();
     // const { getDragMoveHandler } = useDragWithCollision();
     const stageRef = useRef<Konva.Stage>(null);
@@ -46,15 +39,15 @@ const FloorPlanEditor = ({
                 y: position.y,
                 width: selectedTool === "rectangle" ? 100 : undefined,
                 height: selectedTool === "rectangle" ? 80 : undefined,
-                radius: selectedTool === "circle" ? 50 : undefined,
+                radius: selectedTool === "circle" ? 40 : undefined,
                 fill: "#00bcd4",
                 attributes: {
-                    name: `${selectedTool} ${elements.length + 1}`,
+                    name: `${selectedTool} ${dataSet.value.length + 1}`,
                     description: `A ${selectedTool} element`,
                 },
             };
 
-            setElements([...elements, newElement]);
+            dataSet.setValue((prev: FloorPlanElement[]) => [...prev, newElement]);
             setSelectedTool("select");
         }
     };
@@ -65,7 +58,7 @@ const FloorPlanEditor = ({
     };
 
     const handleOnDragEnd = (e: KonvaEventObject<DragEvent>, element: FloorPlanElement) => {
-        const updatedElements = elements.map((el) =>
+        const updatedElements = dataSet.value.map((el: FloorPlanElement) =>
             el.id === element.id
                 ? {
                       ...el,
@@ -74,7 +67,7 @@ const FloorPlanEditor = ({
                   }
                 : el
         );
-        setElements(updatedElements);
+        dataSet.setValue(updatedElements);
     };
 
     const handleMouseOver = (e: KonvaEventObject<MouseEvent>) => {
@@ -110,7 +103,7 @@ const FloorPlanEditor = ({
             >
                 <Layer>
                     <GridLinesBg width={1000} height={520} cellSize={25} />
-                    {elements.map((element) => {
+                    {dataSet.value.map((element: FloorPlanElement) => {
                         const isSelected = selectedElement?.id === element.id;
 
                         if (element.type === "rectangle" || element.type === "circle") {

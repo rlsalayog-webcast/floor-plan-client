@@ -1,5 +1,5 @@
 import { Button, Card, Modal, Radio } from "antd";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { dummyElements } from "../constant/data";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../types/FloorPlan";
@@ -15,11 +15,14 @@ const FloorPlanModal = ({
     isEditDetailsVisible: boolean;
     setIsEditDetailsVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-    const { view, edit, id } = useContext(DrawerVisibilityContext);
-    const [elements, setElements] = useState<FloorPlanElement[]>(dummyElements);
+    const { view, edit, id, dataSet } = useContext(DrawerVisibilityContext);
     const [selectedTool, setSelectedTool] = useState<ISelect>("select");
 
-    const data = dummyElements.find((element: any) => element.id === id.value);
+    const data = dataSet.value?.find((element: any) => element.id === id.value);
+
+    useEffect(() => {
+        dataSet.setValue(dummyElements);
+    }, []);
 
     const onClose = () => {
         view.setVisible(false);
@@ -37,12 +40,7 @@ const FloorPlanModal = ({
             footer={null}
         >
             <div className="grid grid-cols-3 gap-10">
-                <FloorPlanEditor
-                    elements={elements}
-                    setElements={setElements}
-                    selectedTool={selectedTool}
-                    setSelectedTool={setSelectedTool}
-                />
+                <FloorPlanEditor selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
                 <div className="col-span-1 flex flex-col justify-between">
                     <div className="!space-y-6">
                         {edit.visible && (
@@ -64,8 +62,10 @@ const FloorPlanModal = ({
                                     handleEdit={() => setIsEditDetailsVisible(true)}
                                     handleDelete={() => {
                                         if (edit.visible) {
-                                            setElements((prev) =>
-                                                prev.filter((el: any) => el.id !== id.value)
+                                            dataSet.setValue((prev: FloorPlanElement[]) =>
+                                                prev.filter(
+                                                    (el: FloorPlanElement) => el.id !== id.value
+                                                )
                                             );
                                         }
                                     }}

@@ -1,7 +1,10 @@
-import { PlusOutlined, SaveOutlined } from "@ant-design/icons";
+import { SaveOutlined } from "@ant-design/icons";
 import { Button, Drawer, Form, Input, message, Modal, Space, type FormProps } from "antd";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { DrawerVisibilityContext } from "../../store/context/DrawerVisibilityContext";
+import type { FloorPlanElement } from "../../types/FloorPlan";
+
+const { TextArea } = Input;
 
 interface FieldType {
     name: string;
@@ -25,12 +28,35 @@ const FloorDetailsFormDrawer = ({
     const [form] = Form.useForm();
 
     /* States */
-    const { view, add, edit, id } = useContext(DrawerVisibilityContext);
+    const { id, dataSet } = useContext(DrawerVisibilityContext);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const onFinish: FormProps<FieldType>["onFinish"] = useCallback(async (values: FieldType) => {
-        onClose();
-    }, []);
+    useEffect(() => {
+        const data = dataSet.value?.find((element: any) => element.id === id.value);
+        form.setFieldsValue({
+            name: data?.attributes.name,
+            description: data?.attributes.description,
+        });
+    }, [isEditDetailsVisible, dataSet.value?.length, id.value]);
+
+    const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
+        async (values: FieldType) => {
+            dataSet.setValue((prev: FloorPlanElement[]) =>
+                prev.map((el: FloorPlanElement) =>
+                    el.id === id.value
+                        ? {
+                              ...el,
+                              attributes: {
+                                  ...values,
+                              },
+                          }
+                        : el
+                )
+            );
+            onClose();
+        },
+        [id.value]
+    );
 
     const onCloseForm = useCallback(() => {
         if (form.isFieldsTouched()) {
@@ -61,30 +87,20 @@ const FloorDetailsFormDrawer = ({
             {contextHolderModal}
             {contextHolderMessage}
             <Drawer
-                title={"Edit Landmark"}
+                title={"Edit Floor Plan"}
                 width={600}
                 onClose={onCloseForm}
                 open={isEditDetailsVisible}
                 extra={
                     <Space>
-                        {(add.visible || edit.visible) && (
-                            <Button
-                                onClick={() => form.submit()}
-                                type="primary"
-                                icon={
-                                    add.visible ? (
-                                        <PlusOutlined />
-                                    ) : edit.visible ? (
-                                        <SaveOutlined />
-                                    ) : (
-                                        ""
-                                    )
-                                }
-                                loading={isSubmitting}
-                            >
-                                {add.visible ? "Add" : edit.visible ? "Save" : ""}
-                            </Button>
-                        )}
+                        <Button
+                            onClick={() => form.submit()}
+                            type="primary"
+                            icon={<SaveOutlined />}
+                            loading={isSubmitting}
+                        >
+                            Save
+                        </Button>
                     </Space>
                 }
                 afterOpenChange={(open) => {
@@ -108,7 +124,7 @@ const FloorDetailsFormDrawer = ({
                         name="description"
                         rules={[{ required: true, message: "Description is required" }]}
                     >
-                        <Input allowClear />
+                        <TextArea rows={3} allowClear />
                     </Form.Item>
                 </Form>
             </Drawer>

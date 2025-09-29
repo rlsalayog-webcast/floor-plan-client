@@ -10,12 +10,18 @@ interface IdState {
     setValue: React.Dispatch<React.SetStateAction<string | null | undefined>>;
 }
 
+interface DataState {
+    value: any;
+    setValue: React.Dispatch<React.SetStateAction<any>>;
+}
+
 interface DrawerContextType {
     add: DrawerState;
     edit: DrawerState;
     remove: DrawerState;
     view: DrawerState;
     id: IdState;
+    dataSet: DataState;
 }
 
 const initialState: DrawerContextType = {
@@ -39,6 +45,10 @@ const initialState: DrawerContextType = {
         value: undefined,
         setValue: (() => {}) as React.Dispatch<React.SetStateAction<string | null | undefined>>,
     },
+    dataSet: {
+        value: undefined,
+        setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
+    },
 };
 
 export const DrawerVisibilityContext = createContext<DrawerContextType>(initialState);
@@ -49,6 +59,7 @@ const DrawerVisibilityProvider = ({ children }: { children: ReactNode }) => {
     const [isEditVisible, setIsEditVisible] = useState(false);
     const [isRemoveVisible, setIsRemoveVisible] = useState(false);
     const [id, setId] = useState<string | null | undefined>(undefined);
+    const [dataSet, setdataSet] = useState<any>(undefined);
 
     return (
         <DrawerVisibilityContext.Provider
@@ -58,6 +69,7 @@ const DrawerVisibilityProvider = ({ children }: { children: ReactNode }) => {
                 edit: { visible: isEditVisible, setVisible: setIsEditVisible },
                 remove: { visible: isRemoveVisible, setVisible: setIsRemoveVisible },
                 id: { value: id, setValue: setId },
+                dataSet: { value: dataSet, setValue: setdataSet },
             }}
         >
             {children}
