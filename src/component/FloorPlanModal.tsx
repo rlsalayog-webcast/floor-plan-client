@@ -21,12 +21,19 @@ const FloorPlanModal = ({
 
     const data = dummyElements.find((element: any) => element.id === id.value);
 
+    const onClose = () => {
+        view.setVisible(false);
+        edit.setVisible(false);
+        setSelectedTool("select");
+        id.setValue(null);
+    };
+
     return (
         <Modal
             title="Landmark"
             width={1500}
-            open={view.visible}
-            onCancel={() => view.setVisible(false)}
+            open={view.visible || edit.visible}
+            onCancel={onClose}
             footer={null}
         >
             <div className="grid grid-cols-3 gap-10">
@@ -36,55 +43,50 @@ const FloorPlanModal = ({
                     selectedTool={selectedTool}
                     setSelectedTool={setSelectedTool}
                 />
-                <div className="col-span-1">
-                    <div className="flex justify-between">
-                        <CustomActionButtons
-                            actions={edit.visible ? ["edit", "delete"] : ["edit"]}
-                            handleEdit={() => edit.setVisible(true)}
-                            handleDelete={() => {
-                                if (edit.visible) {
-                                    setElements((prev) =>
-                                        prev.filter((el: any) => el.id !== id.value)
-                                    );
-                                }
-                            }}
-                        />
+                <div className="col-span-1 flex flex-col justify-between">
+                    <div className="!space-y-6">
                         {edit.visible && (
-                            <Button
-                                onClick={() => {
-                                    view.setVisible(true);
-                                    edit.setVisible(false);
-                                }}
+                            <Radio.Group
+                                value={selectedTool}
+                                onChange={(e) => setSelectedTool(e.target.value)}
                             >
-                                Save
-                            </Button>
+                                <Radio.Button value="select">Select</Radio.Button>
+                                <Radio.Button value="rectangle">Rectangle</Radio.Button>
+                                <Radio.Button value="circle">Circle</Radio.Button>
+                                <Radio.Button value="triangle">Triangle</Radio.Button>
+                            </Radio.Group>
                         )}
+                        <Card
+                            title="Details"
+                            extra={
+                                <CustomActionButtons
+                                    actions={edit.visible && id.value ? ["edit", "delete"] : []}
+                                    handleEdit={() => setIsEditDetailsVisible(true)}
+                                    handleDelete={() => {
+                                        if (edit.visible) {
+                                            setElements((prev) =>
+                                                prev.filter((el: any) => el.id !== id.value)
+                                            );
+                                        }
+                                    }}
+                                />
+                            }
+                        >
+                            <p>
+                                Title:{" "}
+                                <span className="font-semibold">{data?.attributes.name}</span>
+                            </p>
+                            <p>Description: {data?.attributes.description}</p>
+                        </Card>
                     </div>
                     {edit.visible && (
-                        <Radio.Group
-                            value={selectedTool}
-                            onChange={(e) => setSelectedTool(e.target.value)}
-                        >
-                            <Radio.Button value="select">Select</Radio.Button>
-                            <Radio.Button value="rectangle">Rectangle</Radio.Button>
-                            <Radio.Button value="circle">Circle</Radio.Button>
-                            <Radio.Button value="triangle">Triangle</Radio.Button>
-                        </Radio.Group>
+                        <div className="flex gap-4 justify-end">
+                            <Button danger onClick={onClose}>
+                                Cancel
+                            </Button>
+                            <Button onClick={onClose}>Save</Button>
+                        </div>
                     )}
-                    <Card
-                        title="Details"
-                        extra={
-                            <CustomActionButtons
-                                actions={edit.visible && id.value ? ["edit"] : []}
-                                handleEdit={() => setIsEditDetailsVisible(true)}
-                            />
-                        }
-                    >
-                        <p>
-                            Title: <span className="font-semibold">{data?.attributes.name}</span>
-                        </p>
-                        <p>Description: {data?.attributes.description}</p>
-                    </Card>
                 </div>
             </div>
         </Modal>

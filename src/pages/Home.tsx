@@ -1,5 +1,6 @@
 import { Map } from "@vis.gl/react-google-maps";
 import { useContext, useState } from "react";
+import CustomActionButtons from "../component/CustomActionButtons";
 import FloorDetailsFormDrawer from "../component/floor-plan/FloorDetailsForm";
 import FloorPlanModal from "../component/FloorPlanModal";
 import ClusteredLocationMarkers from "../component/google-maps/ClusteredLocationMarkers";
@@ -8,7 +9,7 @@ import { MANILA_POSITION } from "../constant/mapPosition";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 
 const Home = () => {
-    const { view } = useContext(DrawerVisibilityContext);
+    const { view, edit, id } = useContext(DrawerVisibilityContext);
     const [isEditDetailsVisible, setIsEditDetailsVisible] = useState(false);
 
     return (
@@ -30,7 +31,16 @@ const Home = () => {
                             lng: +longitude,
                         })}
                         renderMarker={() => <span className="text-2xl">📍</span>}
-                        onMarkerClick={() => view.setVisible(true)}
+                        renderInfoWindow={() => (
+                            <>
+                                <p>Floor Plan</p>
+                                <CustomActionButtons
+                                    actions={["view", "edit"]}
+                                    handleView={() => view.setVisible(true)}
+                                    handleEdit={() => edit.setVisible(true)}
+                                />
+                            </>
+                        )}
                     />
                 </Map>
             </div>

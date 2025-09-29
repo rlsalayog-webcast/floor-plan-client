@@ -3,7 +3,6 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import React, { useContext, useRef, useState } from "react";
 import { Circle, Group, Layer, Rect, Stage, Text } from "react-konva";
 import { getDragBoundFunc } from "../../helper/floor-plan";
-import { useDragWithCollision } from "../../hook/useDragWithCollision";
 import useResponsiveStageSize from "../../hook/useResponsiveStageSize";
 import { DrawerVisibilityContext } from "../../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../../types/FloorPlan";
@@ -25,7 +24,7 @@ const FloorPlanEditor = ({
 }: IFloorPlanEditor) => {
     const { edit, id } = useContext(DrawerVisibilityContext);
     const { stageSize, containerRef } = useResponsiveStageSize();
-    const { getDragMoveHandler } = useDragWithCollision();
+    // const { getDragMoveHandler } = useDragWithCollision();
     const stageRef = useRef<Konva.Stage>(null);
     const [selectedElement, setSelectedElement] = useState<FloorPlanElement | null>(null);
 
@@ -125,9 +124,17 @@ const FloorPlanEditor = ({
                                         onDragEnd={(e) => handleOnDragEnd(e, element)}
                                         onDragMove={(e) => {
                                             handleElementClick(element);
-                                            getDragMoveHandler(e, element, elements);
+                                            // getDragMoveHandler(e, element, elements);
                                         }}
-                                        dragBoundFunc={getDragBoundFunc(element, stageRef)}
+                                        dragBoundFunc={(pos) => {
+                                            const stage = stageRef.current;
+
+                                            if (!stage) {
+                                                return pos;
+                                            }
+
+                                            return getDragBoundFunc(pos, element, stage);
+                                        }}
                                         onMouseOver={handleMouseOver}
                                         onMouseOut={handleMouseOut}
                                     >

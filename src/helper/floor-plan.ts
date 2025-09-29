@@ -1,53 +1,49 @@
 import type Konva from "konva";
 import type { FloorPlanElement } from "../types/FloorPlan";
 
-/**
- * Returns a dragBoundFunc for any shape that constrains movement
- * inside the stage boundaries, including stroke width.
- */
 export function getDragBoundFunc(
+    pos: { x: number; y: number },
     element: FloorPlanElement,
-    stageRef: React.RefObject<Konva.Stage | null>
+    stage: Konva.Stage
 ) {
-    return (pos: { x: number; y: number }) => {
-        const stage = stageRef.current;
-        const stageWidth = stage?.width() ?? 0;
-        const stageHeight = stage?.height() ?? 0;
+    const scale = stage.scaleX();
+    const stageWidth = stage.width() / scale;
+    const stageHeight = stage.height() / scale;
 
-        // Fallback strokeWidth to 0 if not defined
-        const strokeWidth = 1;
-        const halfStroke = strokeWidth / 2;
+    // Fallback strokeWidth to 0 if not defined
+    const strokeWidth = 1;
+    const halfStroke = strokeWidth / 2;
 
-        // Determine dimensions and offset dynamically
-        let width = 0;
-        let height = 0;
-        let offsetX = halfStroke;
-        let offsetY = halfStroke;
+    // Determine dimensions and offset dynamically
+    let width = 0;
+    let height = 0;
+    let offsetX = halfStroke;
+    let offsetY = halfStroke;
 
-        switch (element.type) {
-            case "rectangle":
-                width = element.width! + strokeWidth;
-                height = element.height! + strokeWidth;
-                break;
+    switch (element.type) {
+        case "rectangle":
+            width = element.width! + strokeWidth;
+            height = element.height! + strokeWidth;
+            break;
 
-            case "circle":
-                width = element.radius! * 2 + strokeWidth;
-                height = element.radius! * 2 + strokeWidth;
-                // Circle is centered, so adjust offsets to keep it fully inside
-                offsetX = element.radius! + halfStroke;
-                offsetY = element.radius! + halfStroke;
-                break;
+        case "circle":
+            width = element.radius! * 2 + strokeWidth;
+            height = element.radius! * 2 + strokeWidth;
+            offsetX = element.radius!;
+            offsetY = element.radius!;
+            break;
+    }
 
-            default:
-                break;
-        }
+    // Convert pos to unscaled
+    const adjustedX = pos.x / scale;
+    const adjustedY = pos.y / scale;
 
-        // Clamp position so element stays inside stage
-        const newX = Math.max(offsetX, Math.min(pos.x, stageWidth - width + offsetX));
-        const newY = Math.max(offsetY, Math.min(pos.y, stageHeight - height + offsetY));
+    // Clamp position so element stays inside stage
+    const newX = Math.max(offsetX, Math.min(adjustedX, stageWidth - width + offsetX));
+    const newY = Math.max(offsetY, Math.min(adjustedY, stageHeight - height + offsetY));
 
-        return { x: newX, y: newY };
-    };
+    // Return scaled back position
+    return { x: newX * scale, y: newY * scale };
 }
 
 /**
