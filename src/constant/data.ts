@@ -39,7 +39,8 @@ export const dummyElements = [
         y: 80,
         width: 120,
         height: 80,
-        fill: "hsl(200 60% 80%)",
+        backgroundColor: "#1677ff",
+        textColor: "#ffffff",
         attributes: {
             name: "Room 101",
             description: "This is a small office room with a single desk.",
@@ -52,34 +53,11 @@ export const dummyElements = [
         y: 100,
         width: 150,
         height: 100,
-        fill: "hsl(300 60% 80%)",
+        backgroundColor: "#1677ff",
+        textColor: "#ffffff",
         attributes: {
             name: "Conference Hall",
             description: "Large meeting room with projector and seating for 12 people.",
-        },
-    },
-    {
-        id: "circle-1",
-        type: "circle",
-        x: 600,
-        y: 200,
-        radius: 40,
-        fill: "hsl(120 60% 80%)",
-        attributes: {
-            name: "Fountain",
-            description: "Decorative water fountain placed at the center of the lobby.",
-        },
-    },
-    {
-        id: "circle-2",
-        type: "circle",
-        x: 450,
-        y: 300,
-        radius: 30,
-        fill: "hsl(0 60% 80%)",
-        attributes: {
-            name: "Round Table",
-            description: "A round table with 4 chairs, used as a casual discussion area.",
         },
     },
 ];

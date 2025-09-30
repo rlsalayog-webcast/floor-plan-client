@@ -6,7 +6,8 @@ export interface FloorPlanElement {
     width?: number;
     height?: number;
     radius?: number;
-    fill: string;
+    backgroundColor: string;
+    textColor: string;
     attributes: {
         name: string;
         description: string;

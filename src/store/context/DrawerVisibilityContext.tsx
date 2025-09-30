@@ -1,4 +1,5 @@
 import { createContext, useState, type ReactNode } from "react";
+import type { FloorPlanElement } from "../../types/FloorPlan";
 
 interface DrawerState {
     visible: boolean;
@@ -22,6 +23,10 @@ interface DrawerContextType {
     view: DrawerState;
     id: IdState;
     dataSet: DataState;
+    selectedElement: {
+        value: FloorPlanElement | null | undefined;
+        setValue: React.Dispatch<React.SetStateAction<any>>;
+    };
 }
 
 const initialState: DrawerContextType = {
@@ -49,6 +54,10 @@ const initialState: DrawerContextType = {
         value: undefined,
         setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
     },
+    selectedElement: {
+        value: undefined,
+        setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
+    },
 };
 
 export const DrawerVisibilityContext = createContext<DrawerContextType>(initialState);
@@ -60,6 +69,7 @@ const DrawerVisibilityProvider = ({ children }: { children: ReactNode }) => {
     const [isRemoveVisible, setIsRemoveVisible] = useState(false);
     const [id, setId] = useState<string | null | undefined>(undefined);
     const [dataSet, setdataSet] = useState<any>(undefined);
+    const [selectedElement, setSelectedElement] = useState(undefined);
 
     return (
         <DrawerVisibilityContext.Provider
@@ -70,6 +80,7 @@ const DrawerVisibilityProvider = ({ children }: { children: ReactNode }) => {
                 remove: { visible: isRemoveVisible, setVisible: setIsRemoveVisible },
                 id: { value: id, setValue: setId },
                 dataSet: { value: dataSet, setValue: setdataSet },
+                selectedElement: { value: selectedElement, setValue: setSelectedElement },
             }}
         >
             {children}

@@ -1,4 +1,4 @@
-import { Button, Card, Modal, Radio } from "antd";
+import { Button, Card, ColorPicker, Modal, Radio } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { dummyElements } from "../constant/data";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
@@ -45,15 +45,19 @@ const FloorPlanModal = ({
                 <div className="col-span-1 flex flex-col justify-between">
                     <div className="!space-y-6">
                         {edit.visible && (
-                            <Radio.Group
-                                value={selectedTool}
-                                onChange={(e) => setSelectedTool(e.target.value)}
-                            >
-                                <Radio.Button value="select">Select</Radio.Button>
-                                <Radio.Button value="rectangle">Rectangle</Radio.Button>
-                                <Radio.Button value="circle">Circle</Radio.Button>
-                                <Radio.Button value="triangle">Triangle</Radio.Button>
-                            </Radio.Group>
+                            <div className="flex gap-x-4">
+                                <Radio.Group
+                                    value={selectedTool}
+                                    onChange={(e) => setSelectedTool(e.target.value)}
+                                >
+                                    <Radio.Button value="select">Select</Radio.Button>
+                                    <Radio.Button value="rectangle">Floor</Radio.Button>
+                                    {/* <Radio.Button value="circle">Circle</Radio.Button>
+                                    <Radio.Button value="triangle">Triangle</Radio.Button> */}
+                                </Radio.Group>
+                                <ColorPicker defaultValue="#1677ff" />
+                                <ColorPicker defaultValue="#1677ff" />
+                            </div>
                         )}
                         <Card
                             title="Details"
