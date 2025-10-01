@@ -13,7 +13,7 @@ import {
 } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { dummyElements } from "../constant/data";
-import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
+import DrawerVisibilityContext from "../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../types/FloorPlan";
 import CustomActionButtons from "./CustomActionButtons";
 import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
@@ -27,37 +27,44 @@ interface FieldType {
     description: string;
 }
 
-const items: MenuProps["items"] = [
-    {
-        key: "1",
-        label: "Create",
-    },
-    {
-        key: "2",
-        label: "Edit",
-    },
-    {
-        key: "3",
-        label: "Delete",
-    },
-];
-
 const FloorPlanModal = () => {
-    const { view, edit, id, dataSet } = useContext(DrawerVisibilityContext);
+    const { modal, drawer } = useContext(DrawerVisibilityContext);
     const [selectedTool, setSelectedTool] = useState<ISelect>("select");
     const [form] = Form.useForm();
     const [floorLevel, setFloorLevel] = useState<string | undefined>("basement");
 
-    const data = dataSet.value?.find((element: any) => element.id === id.value);
+    const items: MenuProps["items"] = [
+        {
+            key: "1",
+            label: "Create",
+            onClick: () => {
+                drawer.add.setVisible(true);
+            },
+        },
+        {
+            key: "2",
+            label: "Edit",
+            onClick: () => {
+                drawer.edit.setVisible(true);
+            },
+        },
+        {
+            key: "3",
+            label: "Delete",
+            onClick: () => {},
+        },
+    ];
+
+    const data = modal.dataSet.value?.find((element: any) => element.id === modal.id.value);
 
     useEffect(() => {
-        dataSet.setValue(dummyElements);
+        modal.dataSet.setValue(dummyElements);
     }, []);
 
     const onClose = () => {
-        edit.setVisible(false);
+        modal.edit.setVisible(false);
         setSelectedTool("select");
-        id.setValue(null);
+        modal.id.setValue(null);
     };
 
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(async (values: FieldType) => {
@@ -69,10 +76,10 @@ const FloorPlanModal = () => {
         <Modal
             title={"Floor Name"}
             width={1500}
-            open={view.visible || edit.visible}
+            open={modal.view.visible || modal.edit.visible}
             onCancel={() => {
                 onClose();
-                view.setVisible(false);
+                modal.view.setVisible(false);
             }}
             footer={null}
             destroyOnHidden // force re-mount to reset the states
@@ -102,17 +109,19 @@ const FloorPlanModal = () => {
                             </Dropdown>
                         </div>
                         <CustomActionButtons
-                            actions={view.visible && !edit.visible ? ["edit"] : []}
-                            handleEdit={() => edit.setVisible(true)}
+                            actions={modal.view.visible && !modal.edit.visible ? ["edit"] : []}
+                            handleEdit={() => modal.edit.setVisible(true)}
                             handleDelete={() => {
-                                if (edit.visible) {
-                                    dataSet.setValue((prev: FloorPlanElement[]) =>
-                                        prev.filter((el: FloorPlanElement) => el.id !== id.value)
+                                if (modal.edit.visible) {
+                                    modal.dataSet.setValue((prev: FloorPlanElement[]) =>
+                                        prev.filter(
+                                            (el: FloorPlanElement) => el.id !== modal.id.value
+                                        )
                                     );
                                 }
                             }}
                         />
-                        {edit.visible && (
+                        {modal.edit.visible && (
                             <div className="flex gap-x-4">
                                 <Radio.Group
                                     value={selectedTool}
@@ -131,12 +140,13 @@ const FloorPlanModal = () => {
                             title="Details"
                             extra={
                                 <CustomActionButtons
-                                    actions={edit.visible && id.value ? ["delete"] : []}
+                                    actions={modal.edit.visible && modal.id.value ? ["delete"] : []}
                                     handleDelete={() => {
-                                        if (edit.visible) {
-                                            dataSet.setValue((prev: FloorPlanElement[]) =>
+                                        if (modal.edit.visible) {
+                                            modal.dataSet.setValue((prev: FloorPlanElement[]) =>
                                                 prev.filter(
-                                                    (el: FloorPlanElement) => el.id !== id.value
+                                                    (el: FloorPlanElement) =>
+                                                        el.id !== modal.id.value
                                                 )
                                             );
                                         }
@@ -156,7 +166,7 @@ const FloorPlanModal = () => {
                                     rules={[{ required: true, message: "Name is required" }]}
                                 >
                                     <Input
-                                        readOnly={!edit.visible || !Boolean(id.value)}
+                                        readOnly={!modal.edit.visible || !Boolean(modal.id.value)}
                                         allowClear
                                     />
                                 </Form.Item>
@@ -168,14 +178,14 @@ const FloorPlanModal = () => {
                                 >
                                     <TextArea
                                         rows={3}
-                                        readOnly={!edit.visible || !Boolean(id.value)}
+                                        readOnly={!modal.edit.visible || !Boolean(modal.id.value)}
                                         allowClear
                                     />
                                 </Form.Item>
                             </Form>
                         </Card>
                     </div>
-                    {edit.visible && (
+                    {modal.edit.visible && (
                         <div className="flex gap-4 justify-end">
                             <Button danger onClick={onClose}>
                                 Cancel

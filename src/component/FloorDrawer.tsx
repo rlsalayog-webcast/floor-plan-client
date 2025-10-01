@@ -1,6 +1,7 @@
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button, Drawer, Form, Input, message, Modal, Space, type FormProps } from "antd";
-import { useCallback } from "react";
+import { useCallback, useContext } from "react";
+import DrawerVisibilityContext from "../store/context/DrawerVisibilityContext";
 
 interface FieldType {
     name: string;
@@ -8,6 +9,7 @@ interface FieldType {
 }
 
 const FloorDrawer = () => {
+    const { drawer } = useContext(DrawerVisibilityContext);
     const [modal, contextHolderModal] = Modal.useModal();
     const [messageApi, contextHolderMessage] = message.useMessage();
     const [form] = Form.useForm();
@@ -20,7 +22,11 @@ const FloorDrawer = () => {
         console.log("onFinish >> ", values);
     }, []);
 
-    const onClose = useCallback(() => {}, []);
+    const onClose = useCallback(() => {
+        drawer.view.setVisible(false);
+        drawer.add.setVisible(false);
+        drawer.edit.setVisible(false);
+    }, []);
 
     const onCloseForm = useCallback(() => {
         if (form.isFieldsTouched()) {
@@ -48,43 +54,38 @@ const FloorDrawer = () => {
             {contextHolderModal}
             {contextHolderMessage}
             <Drawer
-                title="Create Floor"
-                // title={
-                //     add.visible
-                //         ? "Add Item"
-                //         : view.visible
-                //         ? "View Item"
-                //         : edit.visible
-                //         ? "Edit Item"
-                //         : ""
-                // }
+                title={
+                    drawer.add.visible
+                        ? "Add Floor"
+                        : drawer.view.visible
+                        ? "View Floor"
+                        : drawer.edit.visible
+                        ? "Edit Floor"
+                        : ""
+                }
                 width={600}
                 onClose={onCloseForm}
-                open={false}
-                // open={add.visible || view.visible || edit.visible}
+                open={drawer.add.visible || drawer.view.visible || drawer.edit.visible}
                 extra={
                     <Space>
-                        <Button onClick={onClickSubmit} type="primary" icon={<PlusOutlined />}>
-                            Add
-                        </Button>
-                        {/* {(add.visible || edit.visible) && (
+                        {(drawer.add.visible || drawer.edit.visible) && (
                             <Button
                                 onClick={onClickSubmit}
                                 type="primary"
                                 icon={
-                                    add.visible ? (
+                                    drawer.add.visible ? (
                                         <PlusOutlined />
-                                    ) : edit.visible ? (
+                                    ) : drawer.edit.visible ? (
                                         <SaveOutlined />
                                     ) : (
                                         ""
                                     )
                                 }
-                                loading={isSubmitting}
+                                // loading={isSubmitting}
                             >
-                                {add.visible ? "Add" : edit.visible ? "Save" : ""}
+                                {drawer.add.visible ? "Add" : drawer.edit.visible ? "Save" : ""}
                             </Button>
-                        )} */}
+                        )}
                     </Space>
                 }
                 afterOpenChange={(open) => {

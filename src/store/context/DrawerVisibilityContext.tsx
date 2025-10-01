@@ -1,4 +1,4 @@
-import { createContext, useState, type ReactNode } from "react";
+import { createContext } from "react";
 import type { FloorPlanElement } from "../../types/FloorPlan";
 
 interface DrawerState {
@@ -16,20 +16,27 @@ interface DataState {
     setValue: React.Dispatch<React.SetStateAction<any>>;
 }
 
-interface DrawerContextType {
+interface SelectedElementState {
+    value: FloorPlanElement | null | undefined;
+    setValue: React.Dispatch<React.SetStateAction<FloorPlanElement | null | undefined>>;
+}
+
+interface DrawerGroup {
     add: DrawerState;
     edit: DrawerState;
     remove: DrawerState;
     view: DrawerState;
     id: IdState;
     dataSet: DataState;
-    selectedElement: {
-        value: FloorPlanElement | null | undefined;
-        setValue: React.Dispatch<React.SetStateAction<any>>;
-    };
+    selectedElement: SelectedElementState;
 }
 
-const initialState: DrawerContextType = {
+interface DrawerContextType {
+    modal: DrawerGroup;
+    drawer: DrawerGroup;
+}
+
+const emptyDrawerGroup: DrawerGroup = {
     add: {
         visible: false,
         setVisible: (() => {}) as React.Dispatch<React.SetStateAction<boolean>>,
@@ -56,36 +63,19 @@ const initialState: DrawerContextType = {
     },
     selectedElement: {
         value: undefined,
-        setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
+        setValue: (() => {}) as React.Dispatch<
+            React.SetStateAction<FloorPlanElement | null | undefined>
+        >,
     },
 };
 
-export const DrawerVisibilityContext = createContext<DrawerContextType>(initialState);
-
-const DrawerVisibilityProvider = ({ children }: { children: ReactNode }) => {
-    const [isAddVisible, setIsAddVisible] = useState(false);
-    const [isViewVisible, setIsViewVisible] = useState(false);
-    const [isEditVisible, setIsEditVisible] = useState(false);
-    const [isRemoveVisible, setIsRemoveVisible] = useState(false);
-    const [id, setId] = useState<string | null | undefined>(undefined);
-    const [dataSet, setdataSet] = useState<any>(undefined);
-    const [selectedElement, setSelectedElement] = useState(undefined);
-
-    return (
-        <DrawerVisibilityContext.Provider
-            value={{
-                add: { visible: isAddVisible, setVisible: setIsAddVisible },
-                view: { visible: isViewVisible, setVisible: setIsViewVisible },
-                edit: { visible: isEditVisible, setVisible: setIsEditVisible },
-                remove: { visible: isRemoveVisible, setVisible: setIsRemoveVisible },
-                id: { value: id, setValue: setId },
-                dataSet: { value: dataSet, setValue: setdataSet },
-                selectedElement: { value: selectedElement, setValue: setSelectedElement },
-            }}
-        >
-            {children}
-        </DrawerVisibilityContext.Provider>
-    );
+const initialState: DrawerContextType = {
+    modal: emptyDrawerGroup,
+    drawer: emptyDrawerGroup,
 };
 
-export default DrawerVisibilityProvider;
+const DrawerVisibilityContext = createContext<DrawerContextType>(initialState);
+
+export const DrawerVisibilityProvider = DrawerVisibilityContext.Provider;
+
+export default DrawerVisibilityContext;

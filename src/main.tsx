@@ -6,16 +6,13 @@ import { BrowserRouter } from "react-router-dom";
 import client from "./api/apolloClient.ts";
 import App from "./App.tsx";
 import "./index.css";
-import DrawerVisibilityProvider from "./store/context/DrawerVisibilityContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <ApolloProvider client={client}>
             <BrowserRouter>
                 <APIProvider apiKey={import.meta.env.VITE_GOOGLE_API_KEY || ""}>
-                    <DrawerVisibilityProvider>
-                        <App />
-                    </DrawerVisibilityProvider>
+                    <App />
                 </APIProvider>
             </BrowserRouter>
         </ApolloProvider>

@@ -5,7 +5,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { Circle, Group, Layer, Rect, Stage, Text, Transformer } from "react-konva";
 import { getDragBoundFunc } from "../../helper/floor-plan";
 import useResponsiveStageSize from "../../hook/useResponsiveStageSize";
-import { DrawerVisibilityContext } from "../../store/context/DrawerVisibilityContext";
+import DrawerVisibilityContext from "../../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../../types/FloorPlan";
 import type { ISelect } from "../FloorPlanModal";
 import GridLinesBg from "./GridLinesBg";
@@ -16,7 +16,7 @@ interface IFloorPlanEditor {
 }
 
 const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) => {
-    const { edit, id, dataSet } = useContext(DrawerVisibilityContext);
+    const { modal } = useContext(DrawerVisibilityContext);
     const { stageSize, containerRef } = useResponsiveStageSize();
     const [selectedElement, setSelectedElement] = useState<FloorPlanElement | null>(null);
     const stageRef = useRef<Konva.Stage>(null);
@@ -40,7 +40,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
     }, [selectedElement]);
 
     const bringToFront = (elementId: string) => {
-        dataSet.setValue((prev: FloorPlanElement[]) => {
+        modal.dataSet.setValue((prev: FloorPlanElement[]) => {
             const elementIndex = prev.findIndex((el) => el.id === elementId);
             if (elementIndex === -1) {
                 return prev;
@@ -76,24 +76,24 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                 backgroundColor: "#1677ff",
                 textColor: "#ffffff",
                 attributes: {
-                    name: `${selectedTool} ${dataSet.value.length + 1}`,
+                    name: `${selectedTool} ${modal.dataSet.value.length + 1}`,
                     description: `A ${selectedTool} element`,
                 },
             };
 
-            dataSet.setValue((prev: FloorPlanElement[]) => [...prev, newElement]);
+            modal.dataSet.setValue((prev: FloorPlanElement[]) => [...prev, newElement]);
             setSelectedTool("select");
         }
     };
 
     const handleElementClick = (element: FloorPlanElement) => {
-        id.setValue(element.id);
+        modal.id.setValue(element.id);
         setSelectedElement(element);
         bringToFront(element.id);
     };
 
     const handleOnDragEnd = (e: KonvaEventObject<DragEvent>, element: FloorPlanElement) => {
-        const updatedElements = dataSet.value.map((el: FloorPlanElement) =>
+        const updatedElements = modal.dataSet.value.map((el: FloorPlanElement) =>
             el.id === element.id
                 ? {
                       ...el,
@@ -102,12 +102,12 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                   }
                 : el
         );
-        dataSet.setValue(updatedElements);
+        modal.dataSet.setValue(updatedElements);
     };
 
     const handleMouseOver = (e: KonvaEventObject<MouseEvent>) => {
         const stage = e.target.getStage();
-        if (stage && edit.visible) {
+        if (stage && modal.edit.visible) {
             stage.container().style.cursor = "move";
         }
     };
@@ -153,10 +153,10 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
         }
 
         // Update the element in the dataset
-        const updatedElements = dataSet.value.map((el: FloorPlanElement) =>
+        const updatedElements = modal.dataSet.value.map((el: FloorPlanElement) =>
             el.id === selectedElement.id ? updatedElement : el
         );
-        dataSet.setValue(updatedElements);
+        modal.dataSet.setValue(updatedElements);
         setSelectedElement(updatedElement);
     };
 
@@ -220,13 +220,13 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                     // deselect the shape when clicking on empty space
                     if (e.target === e.target.getStage()) {
                         setSelectedElement(null);
-                        id.setValue(null);
+                        modal.id.setValue(null);
                     }
                 }}
             >
                 <Layer>
                     <GridLinesBg width={1000} height={520} cellSize={25} />
-                    {dataSet.value?.map((element: FloorPlanElement) => {
+                    {modal.dataSet.value?.map((element: FloorPlanElement) => {
                         const isSelected = selectedElement?.id === element.id;
 
                         if (element.type === "rectangle" || element.type === "circle") {
@@ -243,7 +243,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                                     }}
                                     x={element.x}
                                     y={element.y}
-                                    draggable={edit.visible}
+                                    draggable={modal.edit.visible}
                                     onClick={() => handleElementClick(element)}
                                     onDragStart={() => bringToFront(element.id)}
                                     onDragEnd={(e) => handleOnDragEnd(e, element)}
@@ -314,7 +314,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                     })}
 
                     {/* FIXED: Single Transformer outside the map loop */}
-                    {selectedElement && edit.visible && (
+                    {selectedElement && modal.edit.visible && (
                         <Transformer
                             ref={transformerRef}
                             boundBoxFunc={boundBoxFunc}
