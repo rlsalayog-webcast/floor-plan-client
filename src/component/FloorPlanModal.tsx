@@ -1,13 +1,22 @@
-import { HighlightOutlined } from "@ant-design/icons";
-import { Button, Card, Form, Input, Modal, Radio, Select, Typography, type FormProps } from "antd";
+import { DownOutlined } from "@ant-design/icons";
+import {
+    Button,
+    Card,
+    Dropdown,
+    Form,
+    Input,
+    Modal,
+    Radio,
+    Select,
+    type FormProps,
+    type MenuProps,
+} from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { dummyElements } from "../constant/data";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../types/FloorPlan";
 import CustomActionButtons from "./CustomActionButtons";
 import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
-
-const { Paragraph } = Typography;
 
 const { TextArea } = Input;
 
@@ -18,11 +27,25 @@ interface FieldType {
     description: string;
 }
 
+const items: MenuProps["items"] = [
+    {
+        key: "1",
+        label: "Create",
+    },
+    {
+        key: "2",
+        label: "Edit",
+    },
+    {
+        key: "3",
+        label: "Delete",
+    },
+];
+
 const FloorPlanModal = () => {
     const { view, edit, id, dataSet } = useContext(DrawerVisibilityContext);
     const [selectedTool, setSelectedTool] = useState<ISelect>("select");
     const [form] = Form.useForm();
-    const [title, setTitle] = useState("Landmark");
     const [floorLevel, setFloorLevel] = useState<string | undefined>("basement");
 
     const data = dataSet.value?.find((element: any) => element.id === id.value);
@@ -41,28 +64,10 @@ const FloorPlanModal = () => {
         console.log("values >> ", values);
         onClose();
     }, []);
+
     return (
         <Modal
-            title={
-                <Paragraph
-                    editable={
-                        edit.visible
-                            ? {
-                                  icon: <HighlightOutlined />,
-                                  tooltip: "Click to edit title",
-                                  onChange: (value) => {
-                                      if (value) {
-                                          setTitle(value);
-                                      }
-                                  },
-                              }
-                            : false
-                    }
-                    style={{ marginBottom: 0 }} // remove extra spacing inside title
-                >
-                    {title}
-                </Paragraph>
-            }
+            title={"Floor Name"}
             width={1500}
             open={view.visible || edit.visible}
             onCancel={() => {
@@ -76,23 +81,26 @@ const FloorPlanModal = () => {
                 <FloorPlanEditor selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
                 <div className="col-span-1 flex flex-col justify-between">
                     <div className="!space-y-6">
-                        <Select
-                            placeholder="Floor Level"
-                            style={{ width: 160 }}
-                            allowClear
-                            value={floorLevel}
-                            onChange={(val) => setFloorLevel(val)}
-                            options={[
-                                { value: "basement", label: "Basement" },
-                                { value: "ground", label: "Ground Floor" },
-                                { value: "first", label: "First Floor" },
-                                { value: "second", label: "Second Floor" },
-                                { value: "third", label: "Third Floor" },
-                                { value: "fourth", label: "Fourth Floor" },
-                                { value: "fifth", label: "Fifth Floor" },
-                                { value: "rooftop", label: "Rooftop" },
-                            ]}
-                        />
+                        <div className="flex gap-x-4">
+                            <Select
+                                placeholder="Floor Level"
+                                style={{ width: 160 }}
+                                allowClear
+                                value={floorLevel}
+                                onChange={(val) => setFloorLevel(val)}
+                                options={[
+                                    { value: "basement", label: "Basement" },
+                                    { value: "ground", label: "Ground Floor" },
+                                    { value: "first", label: "First Floor" },
+                                ]}
+                            />
+                            <Dropdown menu={{ items }} placement="bottom">
+                                <Button type="primary">
+                                    Floor Actions
+                                    <DownOutlined />
+                                </Button>
+                            </Dropdown>
+                        </div>
                         <CustomActionButtons
                             actions={view.visible && !edit.visible ? ["edit"] : []}
                             handleEdit={() => edit.setVisible(true)}

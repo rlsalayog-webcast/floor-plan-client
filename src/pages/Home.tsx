@@ -1,10 +1,10 @@
 import { Map } from "@vis.gl/react-google-maps";
-import { Alert, Spin } from "antd";
+import { Alert, Button, Spin } from "antd";
 import { useContext } from "react";
 import { useGetAllLandmark } from "../api/hooks/useGetAllLandmark";
+import FloorDrawer from "../component/FloorDrawer";
 import FloorPlanModal from "../component/FloorPlanModal";
 import ClusteredLocationMarkers from "../component/google-maps/ClusteredLocationMarkers";
-import { dummyLocations } from "../constant/data";
 import { MANILA_POSITION } from "../constant/mapPosition";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 
@@ -39,20 +39,46 @@ const Home = () => {
                     disableDefaultUI
                 >
                     <ClusteredLocationMarkers
-                        data={data?.getLandmarks ?? dummyLocations}
+                        data={data?.getLandmarks ?? []}
                         getKey={({ id }) => id}
                         getPosition={({ latitude, longitude }) => ({
                             lat: +latitude,
                             lng: +longitude,
                         })}
                         renderMarker={() => <span className="text-2xl">📍</span>}
-                        onMarkerClick={() => {
-                            view.setVisible(true);
-                        }}
+                        renderInfoWindow={(e) => (
+                            <div className="grid grid-cols-2">
+                                <div>
+                                    <p>Id :</p>
+                                    <p>Name :</p>
+                                    <p>Category :</p>
+                                    <p>Longitude :</p>
+                                    <p>Latitude :</p>
+                                    <p>Floor Plan :</p>
+                                </div>
+                                <div>
+                                    <div>{e.id}</div>
+                                    <div>{e.name}</div>
+                                    <div>{e.category}</div>
+                                    <div>{e.longitude}</div>
+                                    <div>{e.latitude}</div>
+                                    <Button>Create Floor</Button>
+                                    <Button
+                                        onClick={() => {
+                                            view.setVisible(true);
+                                            id.setValue(e.id);
+                                        }}
+                                    >
+                                        View Floor
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     />
                 </Map>
             </div>
             <FloorPlanModal />
+            <FloorDrawer />
         </>
     );
 };

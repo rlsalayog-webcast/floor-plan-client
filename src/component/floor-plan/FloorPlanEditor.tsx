@@ -18,7 +18,6 @@ interface IFloorPlanEditor {
 const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) => {
     const { edit, id, dataSet } = useContext(DrawerVisibilityContext);
     const { stageSize, containerRef } = useResponsiveStageSize();
-    // const { getDragMoveHandler } = useDragWithCollision();
     const [selectedElement, setSelectedElement] = useState<FloorPlanElement | null>(null);
     const stageRef = useRef<Konva.Stage>(null);
     const elementRefs = useRef(new Map());
@@ -227,7 +226,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
             >
                 <Layer>
                     <GridLinesBg width={1000} height={520} cellSize={25} />
-                    {dataSet.value.map((element: FloorPlanElement) => {
+                    {dataSet.value?.map((element: FloorPlanElement) => {
                         const isSelected = selectedElement?.id === element.id;
 
                         if (element.type === "rectangle" || element.type === "circle") {
