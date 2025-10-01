@@ -1,5 +1,7 @@
 import { Map } from "@vis.gl/react-google-maps";
+import { Alert, Spin } from "antd";
 import { useContext } from "react";
+import { useGetAllLandmark } from "../api/hooks/useGetAllLandmark";
 import FloorPlanModal from "../component/FloorPlanModal";
 import ClusteredLocationMarkers from "../component/google-maps/ClusteredLocationMarkers";
 import { dummyLocations } from "../constant/data";
@@ -8,10 +10,26 @@ import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContex
 
 const Home = () => {
     const { view, edit, id } = useContext(DrawerVisibilityContext);
+    const { data, loading, error } = useGetAllLandmark();
 
     return (
         <>
             <div className="min-h-screen">
+                {loading && (
+                    <div className="p-4">
+                        <Spin tip="Loading landmarks..." />
+                    </div>
+                )}
+                {error && (
+                    <div className="p-4">
+                        <Alert
+                            type="error"
+                            message="Failed to load landmarks"
+                            description={(error as Error).message}
+                            showIcon
+                        />
+                    </div>
+                )}
                 <Map
                     style={{ height: "100vh" }}
                     mapId={import.meta.env.VITE_MAP_ID || ""}
@@ -21,7 +39,7 @@ const Home = () => {
                     disableDefaultUI
                 >
                     <ClusteredLocationMarkers
-                        data={dummyLocations}
+                        data={data?.getLandmarks ?? dummyLocations}
                         getKey={({ id }) => id}
                         getPosition={({ latitude, longitude }) => ({
                             lat: +latitude,
