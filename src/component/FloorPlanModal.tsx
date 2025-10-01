@@ -1,22 +1,24 @@
-import { Button, Card, ColorPicker, Modal, Radio } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { Button, Card, Form, Input, Modal, Radio, type FormProps } from "antd";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { dummyElements } from "../constant/data";
 import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContext";
 import type { FloorPlanElement } from "../types/FloorPlan";
 import CustomActionButtons from "./CustomActionButtons";
 import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
 
+const { TextArea } = Input;
+
 export type ISelect = "select" | "rectangle" | "circle" | "triangle";
 
-const FloorPlanModal = ({
-    isEditDetailsVisible,
-    setIsEditDetailsVisible,
-}: {
-    isEditDetailsVisible: boolean;
-    setIsEditDetailsVisible: React.Dispatch<React.SetStateAction<boolean>>;
-}) => {
+interface FieldType {
+    name: string;
+    description: string;
+}
+
+const FloorPlanModal = () => {
     const { view, edit, id, dataSet } = useContext(DrawerVisibilityContext);
     const [selectedTool, setSelectedTool] = useState<ISelect>("select");
+    const [form] = Form.useForm();
 
     const data = dataSet.value?.find((element: any) => element.id === id.value);
 
@@ -25,18 +27,24 @@ const FloorPlanModal = ({
     }, []);
 
     const onClose = () => {
-        view.setVisible(false);
         edit.setVisible(false);
         setSelectedTool("select");
         id.setValue(null);
     };
 
+    const onFinish: FormProps<FieldType>["onFinish"] = useCallback(async (values: FieldType) => {
+        console.log("values >> ", values);
+        onClose();
+    }, []);
     return (
         <Modal
             title="Landmark"
             width={1500}
             open={view.visible || edit.visible}
-            onCancel={onClose}
+            onCancel={() => {
+                onClose();
+                view.setVisible(false);
+            }}
             footer={null}
             destroyOnHidden // force re-mount to reset the states
         >
@@ -44,6 +52,17 @@ const FloorPlanModal = ({
                 <FloorPlanEditor selectedTool={selectedTool} setSelectedTool={setSelectedTool} />
                 <div className="col-span-1 flex flex-col justify-between">
                     <div className="!space-y-6">
+                        <CustomActionButtons
+                            actions={view.visible && !edit.visible ? ["edit"] : []}
+                            handleEdit={() => edit.setVisible(true)}
+                            handleDelete={() => {
+                                if (edit.visible) {
+                                    dataSet.setValue((prev: FloorPlanElement[]) =>
+                                        prev.filter((el: FloorPlanElement) => el.id !== id.value)
+                                    );
+                                }
+                            }}
+                        />
                         {edit.visible && (
                             <div className="flex gap-x-4">
                                 <Radio.Group
@@ -55,16 +74,15 @@ const FloorPlanModal = ({
                                     {/* <Radio.Button value="circle">Circle</Radio.Button>
                                     <Radio.Button value="triangle">Triangle</Radio.Button> */}
                                 </Radio.Group>
-                                <ColorPicker defaultValue="#1677ff" />
-                                <ColorPicker defaultValue="#1677ff" />
+                                {/* <ColorPicker defaultValue="#1677ff" />
+                                <ColorPicker defaultValue="#1677ff" /> */}
                             </div>
                         )}
                         <Card
                             title="Details"
                             extra={
                                 <CustomActionButtons
-                                    actions={edit.visible && id.value ? ["edit", "delete"] : []}
-                                    handleEdit={() => setIsEditDetailsVisible(true)}
+                                    actions={edit.visible && id.value ? ["delete"] : []}
                                     handleDelete={() => {
                                         if (edit.visible) {
                                             dataSet.setValue((prev: FloorPlanElement[]) =>
@@ -77,11 +95,35 @@ const FloorPlanModal = ({
                                 />
                             }
                         >
-                            <p>
-                                Title:{" "}
-                                <span className="font-semibold">{data?.attributes.name}</span>
-                            </p>
-                            <p>Description: {data?.attributes.description}</p>
+                            <Form
+                                form={form}
+                                layout="vertical"
+                                onFinish={onFinish}
+                                autoComplete="off"
+                            >
+                                <Form.Item
+                                    label="Name"
+                                    name="name"
+                                    rules={[{ required: true, message: "Name is required" }]}
+                                >
+                                    <Input
+                                        readOnly={!edit.visible || !Boolean(id.value)}
+                                        allowClear
+                                    />
+                                </Form.Item>
+
+                                <Form.Item
+                                    label="Description"
+                                    name="description"
+                                    rules={[{ required: true, message: "Description is required" }]}
+                                >
+                                    <TextArea
+                                        rows={3}
+                                        readOnly={!edit.visible || !Boolean(id.value)}
+                                        allowClear
+                                    />
+                                </Form.Item>
+                            </Form>
                         </Card>
                     </div>
                     {edit.visible && (
@@ -89,7 +131,13 @@ const FloorPlanModal = ({
                             <Button danger onClick={onClose}>
                                 Cancel
                             </Button>
-                            <Button onClick={onClose}>Save</Button>
+                            <Button
+                                onClick={() => {
+                                    form.submit();
+                                }}
+                            >
+                                Save
+                            </Button>
                         </div>
                     )}
                 </div>

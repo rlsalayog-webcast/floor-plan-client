@@ -1,7 +1,5 @@
 import { Map } from "@vis.gl/react-google-maps";
-import { useContext, useState } from "react";
-import CustomActionButtons from "../component/CustomActionButtons";
-import FloorDetailsFormDrawer from "../component/floor-plan/FloorDetailsForm";
+import { useContext } from "react";
 import FloorPlanModal from "../component/FloorPlanModal";
 import ClusteredLocationMarkers from "../component/google-maps/ClusteredLocationMarkers";
 import { dummyLocations } from "../constant/data";
@@ -10,7 +8,6 @@ import { DrawerVisibilityContext } from "../store/context/DrawerVisibilityContex
 
 const Home = () => {
     const { view, edit, id } = useContext(DrawerVisibilityContext);
-    const [isEditDetailsVisible, setIsEditDetailsVisible] = useState(false);
 
     return (
         <>
@@ -31,27 +28,13 @@ const Home = () => {
                             lng: +longitude,
                         })}
                         renderMarker={() => <span className="text-2xl">📍</span>}
-                        renderInfoWindow={() => (
-                            <>
-                                <p>Floor Plan</p>
-                                <CustomActionButtons
-                                    actions={["view", "edit"]}
-                                    handleView={() => view.setVisible(true)}
-                                    handleEdit={() => edit.setVisible(true)}
-                                />
-                            </>
-                        )}
+                        onMarkerClick={() => {
+                            view.setVisible(true);
+                        }}
                     />
                 </Map>
             </div>
-            <FloorPlanModal
-                isEditDetailsVisible={isEditDetailsVisible}
-                setIsEditDetailsVisible={setIsEditDetailsVisible}
-            />
-            <FloorDetailsFormDrawer
-                isEditDetailsVisible={isEditDetailsVisible}
-                setIsEditDetailsVisible={setIsEditDetailsVisible}
-            />
+            <FloorPlanModal />
         </>
     );
 };

@@ -222,6 +222,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                     if (e.target === e.target.getStage()) {
                         setSelectedElement(null);
                         id.setValue(null);
+                        edit.setVisible(false);
                     }
                 }}
             >
