@@ -9,7 +9,13 @@ import DrawerVisibilityContext from "../../store/context/DrawerVisibilityContext
 import type { IFloor, IFloorPlanArea } from "../../types/FloorPlan";
 import GridLinesBg from "./GridLinesBg";
 
-const FloorPlanEditor = () => {
+const FloorPlanEditor = ({
+    handleAreaClick,
+    handleStageOpenAreaClick,
+}: {
+    handleAreaClick: (area: IFloorPlanArea) => void;
+    handleStageOpenAreaClick: () => void;
+}) => {
     const { modal } = useContext(DrawerVisibilityContext);
     const { stageSize, containerRef } = useResponsiveStageSize();
     const stageRef = useRef<Konva.Stage>(null);
@@ -88,6 +94,7 @@ const FloorPlanEditor = () => {
     const handleElementClick = (element: IFloorPlanArea) => {
         modal.selectedArea.setValue(element);
         bringToFront(element.id);
+        handleAreaClick(element);
     };
 
     const handleOnDragEnd = (e: KonvaEventObject<DragEvent>, element: IFloorPlanArea) => {
@@ -195,7 +202,7 @@ const FloorPlanEditor = () => {
                 onMouseDown={(e) => {
                     // deselect the shape when clicking on empty space
                     if (e.target === e.target.getStage()) {
-                        modal.selectedArea.setValue(null);
+                        handleStageOpenAreaClick();
                     }
                 }}
             >

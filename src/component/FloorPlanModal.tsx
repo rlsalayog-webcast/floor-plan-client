@@ -109,6 +109,10 @@ const FloorPlanModal = () => {
         async (val: any) => {
             if (!val) return;
 
+            modal.edit.setVisible(false);
+            modal.selectedArea.setValue(null);
+            form.resetFields();
+
             setFloorLevel(val);
 
             if (modal.id.value) {
@@ -168,7 +172,18 @@ const FloorPlanModal = () => {
 
                 {!loading && (
                     <div className="grid grid-cols-3 gap-10">
-                        <FloorPlanEditor />
+                        <FloorPlanEditor
+                            handleAreaClick={({ details }) => {
+                                form.setFieldsValue({
+                                    name: details.name,
+                                    description: details.description,
+                                });
+                            }}
+                            handleStageOpenAreaClick={() => {
+                                modal.selectedArea.setValue(null);
+                                form.resetFields();
+                            }}
+                        />
                         <div className="col-span-1 flex flex-col justify-between">
                             <div className="!space-y-6">
                                 <div className="flex gap-x-4">
@@ -218,6 +233,9 @@ const FloorPlanModal = () => {
                                             }
                                             handleDelete={() => {
                                                 if (modal.edit.visible) {
+                                                    form.resetFields();
+                                                    modal.edit.setVisible(false);
+
                                                     modal.dataSet.setValue((prev: IFloor) => ({
                                                         ...prev,
                                                         areas: prev.areas?.filter(
@@ -242,7 +260,9 @@ const FloorPlanModal = () => {
                                             name="name"
                                             rules={[
                                                 {
-                                                    required: modal.edit.visible,
+                                                    required:
+                                                        modal.edit.visible &&
+                                                        modal.selectedArea.value,
                                                     message: "Name is required",
                                                 },
                                             ]}
@@ -261,7 +281,9 @@ const FloorPlanModal = () => {
                                             name="description"
                                             rules={[
                                                 {
-                                                    required: modal.edit.visible,
+                                                    required:
+                                                        modal.edit.visible &&
+                                                        modal.selectedArea.value,
                                                     message: "Description is required",
                                                 },
                                             ]}
