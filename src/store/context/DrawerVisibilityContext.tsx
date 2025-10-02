@@ -32,7 +32,7 @@ interface DrawerGroup {
 }
 
 interface DrawerContextType {
-    modal: DrawerGroup;
+    modal: DrawerGroup & { selectedTool: DataState; selectedArea: DataState };
     drawer: DrawerGroup;
 }
 
@@ -70,7 +70,17 @@ const emptyDrawerGroup: DrawerGroup = {
 };
 
 const initialState: DrawerContextType = {
-    modal: emptyDrawerGroup,
+    modal: {
+        ...emptyDrawerGroup,
+        selectedTool: {
+            value: undefined,
+            setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
+        },
+        selectedArea: {
+            value: undefined,
+            setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
+        },
+    },
     drawer: emptyDrawerGroup,
 };
 

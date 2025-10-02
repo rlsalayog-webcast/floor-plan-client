@@ -23,8 +23,6 @@ import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
 
 const { TextArea } = Input;
 
-export type ISelect = "select" | "floor";
-
 interface FieldType {
     name: string;
     description: string;
@@ -40,7 +38,6 @@ const FloorPlanModal = () => {
     const { handleGetLandmarkById, loading: loadingGetLandmarkById } = useGetLandmarkById();
     const { handleGetFloorByLevelId, loading: loadingGetFloorByLevelId } = useGetFloorByLevelId();
     const { modal, drawer } = useContext(DrawerVisibilityContext);
-    const [selectedTool, setSelectedTool] = useState<ISelect>("select");
     const [form] = Form.useForm();
     const [floorLevel, setFloorLevel] = useState<string | undefined>("");
     const [floorOptions, setFloorOptions] = useState<FloorOption[]>([]);
@@ -128,7 +125,7 @@ const FloorPlanModal = () => {
     const onClose = () => {
         modal.edit.setVisible(false);
         modal.id.setValue(null);
-        setSelectedTool("select");
+        modal.selectedTool.setValue("select");
     };
 
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(async (values: FieldType) => {
@@ -168,10 +165,7 @@ const FloorPlanModal = () => {
 
                 {!loading && (
                     <div className="grid grid-cols-3 gap-10">
-                        <FloorPlanEditor
-                            selectedTool={selectedTool}
-                            setSelectedTool={setSelectedTool}
-                        />
+                        <FloorPlanEditor />
                         <div className="col-span-1 flex flex-col justify-between">
                             <div className="!space-y-6">
                                 <div className="flex gap-x-4">
@@ -198,8 +192,10 @@ const FloorPlanModal = () => {
                                 {modal.edit.visible && (
                                     <div className="flex gap-x-4">
                                         <Radio.Group
-                                            value={selectedTool}
-                                            onChange={(e) => setSelectedTool(e.target.value)}
+                                            value={modal.selectedTool.value}
+                                            onChange={(e) =>
+                                                modal.selectedTool.setValue(e.target.value)
+                                            }
                                         >
                                             <Radio.Button value="select">Select</Radio.Button>
                                             <Radio.Button value="area">Floor</Radio.Button>
@@ -213,7 +209,7 @@ const FloorPlanModal = () => {
                                     extra={
                                         <CustomActionButtons
                                             actions={
-                                                modal.edit.visible && modal.id.value
+                                                modal.edit.visible && modal.selectedArea.value
                                                     ? ["delete"]
                                                     : []
                                             }
@@ -223,7 +219,8 @@ const FloorPlanModal = () => {
                                                         ...prev,
                                                         areas: prev.areas?.filter(
                                                             (el: IFloorPlanArea) =>
-                                                                el.id !== modal.id.value
+                                                                el.id !==
+                                                                modal.selectedArea.value.id
                                                         ),
                                                     }));
                                                 }
@@ -246,7 +243,8 @@ const FloorPlanModal = () => {
                                         >
                                             <Input
                                                 readOnly={
-                                                    !modal.edit.visible || !Boolean(modal.id.value)
+                                                    !modal.edit.visible ||
+                                                    !Boolean(modal.selectedArea.value)
                                                 }
                                                 allowClear
                                             />
@@ -265,7 +263,8 @@ const FloorPlanModal = () => {
                                             <TextArea
                                                 rows={3}
                                                 readOnly={
-                                                    !modal.edit.visible || !Boolean(modal.id.value)
+                                                    !modal.edit.visible ||
+                                                    !Boolean(modal.selectedArea.value)
                                                 }
                                                 allowClear
                                             />

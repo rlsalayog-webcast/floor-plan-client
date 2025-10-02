@@ -1,5 +1,6 @@
 import { Map } from "@vis.gl/react-google-maps";
 import { Alert, Button, Spin } from "antd";
+import { useState } from "react";
 import { useGetAllLandmark } from "../api/hooks/useGetAllLandmark";
 import FloorDrawer from "../component/FloorDrawer";
 import FloorPlanModal from "../component/FloorPlanModal";
@@ -8,14 +9,30 @@ import { MANILA_POSITION } from "../constant/mapPosition";
 import useDrawerVisibility from "../hook/useDrawerVisibility";
 import { DrawerVisibilityProvider } from "../store/context/DrawerVisibilityContext";
 
+export type ISelect = "select" | "floor";
+
 const Home = () => {
     const modal = useDrawerVisibility();
     const drawer = useDrawerVisibility();
     const { data, loading, error } = useGetAllLandmark();
+    const [selectedTool, setSelectedTool] = useState<ISelect>("select");
+    const [selectedArea, setSelectedArea] = useState(undefined);
 
     return (
         <>
-            <DrawerVisibilityProvider value={{ modal, drawer }}>
+            <DrawerVisibilityProvider
+                value={{
+                    modal: {
+                        ...modal,
+                        selectedTool: { value: selectedTool, setValue: setSelectedTool },
+                        selectedArea: {
+                            value: selectedArea,
+                            setValue: setSelectedArea,
+                        },
+                    },
+                    drawer,
+                }}
+            >
                 <div className="min-h-screen">
                     {loading && (
                         <div className="p-4">

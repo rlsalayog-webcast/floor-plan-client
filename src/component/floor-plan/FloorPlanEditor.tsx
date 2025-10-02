@@ -1,34 +1,27 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { Box } from "konva/lib/shapes/Transformer";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { Group, Layer, Rect, Stage, Text, Transformer } from "react-konva";
 import { getDragBoundFunc } from "../../helper/floor-plan";
 import useResponsiveStageSize from "../../hook/useResponsiveStageSize";
 import DrawerVisibilityContext from "../../store/context/DrawerVisibilityContext";
 import type { IFloor, IFloorPlanArea } from "../../types/FloorPlan";
-import type { ISelect } from "../FloorPlanModal";
 import GridLinesBg from "./GridLinesBg";
 
-interface IFloorPlanEditor {
-    selectedTool: ISelect;
-    setSelectedTool: React.Dispatch<React.SetStateAction<ISelect>>;
-}
-
-const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) => {
+const FloorPlanEditor = () => {
     const { modal } = useContext(DrawerVisibilityContext);
     const { stageSize, containerRef } = useResponsiveStageSize();
-    const [selectedElement, setSelectedElement] = useState<IFloorPlanArea | null>(null);
     const stageRef = useRef<Konva.Stage>(null);
     const elementRefs = useRef(new Map());
     const transformerRef = useRef<Konva.Transformer>(null);
 
     // Used for transformer / resizing
     useEffect(() => {
-        if (selectedElement && transformerRef.current) {
+        if (modal.selectedArea.value?.id && transformerRef.current) {
             const stage = stageRef.current;
             if (stage) {
-                const node = stage.findOne(`#element-${selectedElement.id}`);
+                const node = stage.findOne(`#element-${modal.selectedArea.value.id}`);
                 if (node) {
                     transformerRef.current.nodes([node]);
                     transformerRef.current.getLayer()?.batchDraw();
@@ -37,7 +30,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
         } else if (transformerRef.current) {
             transformerRef.current.nodes([]);
         }
-    }, [selectedElement]);
+    }, [modal.selectedArea.value?.id]);
 
     const bringToFront = (elementId: string) => {
         modal.dataSet.setValue((prev: IFloor) => {
@@ -69,7 +62,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
             return;
         }
 
-        if (selectedTool !== "select") {
+        if (modal.selectedTool.value !== "select") {
             const newElement: IFloorPlanArea = {
                 id: `element-${Date.now()}`,
                 x: position.x,
@@ -79,8 +72,8 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                 backgroundColor: "#1677ff",
                 textColor: "#ffffff",
                 details: {
-                    name: `${selectedTool} ${modal.dataSet.value.areas.length + 1}`,
-                    description: `A ${selectedTool} element`,
+                    name: `${modal.selectedTool.value} ${modal.dataSet.value.areas.length + 1}`,
+                    description: `A ${modal.selectedTool.value} element`,
                 },
             };
 
@@ -88,13 +81,12 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                 ...prev,
                 areas: [...(prev.areas ?? []), newElement],
             }));
-            setSelectedTool("select");
+            modal.selectedTool.setValue("select");
         }
     };
 
     const handleElementClick = (element: IFloorPlanArea) => {
-        // modal.id.setValue(element.id);
-        setSelectedElement(element);
+        modal.selectedArea.setValue(element);
         bringToFront(element.id);
     };
 
@@ -131,7 +123,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
 
     // NEW: Handle transform end to update element dimensions
     const handleTransformEnd = () => {
-        if (!selectedElement || !transformerRef.current) return;
+        if (!modal.selectedArea.value || !transformerRef.current) return;
 
         const node = transformerRef.current.nodes()[0];
         if (!node) return;
@@ -143,22 +135,22 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
         node.scaleX(1);
         node.scaleY(1);
 
-        let updatedElement = { ...selectedElement };
+        let updatedElement = { ...modal.selectedArea.value };
 
         updatedElement = {
-            ...selectedElement,
+            ...modal.selectedArea.value,
             x: node.x(),
             y: node.y(),
-            width: Math.max(20, (selectedElement.width || 100) * scaleX),
-            height: Math.max(20, (selectedElement.height || 80) * scaleY),
+            width: Math.max(20, (modal.selectedArea.value.width || 100) * scaleX),
+            height: Math.max(20, (modal.selectedArea.value.height || 80) * scaleY),
         };
 
         // Update the element in the dataset
         const updatedElements = modal.dataSet.value.areas?.map((el: IFloorPlanArea) =>
-            el.id === selectedElement.id ? updatedElement : el
+            el.id === modal.selectedArea.value.id ? updatedElement : el
         );
         modal.dataSet.setValue((prev: IFloor) => ({ ...prev, areas: updatedElements }));
-        setSelectedElement(updatedElement);
+        modal.selectedArea.setValue(updatedElement);
     };
 
     const boundBoxFunc = (oldBox: Box, newBox: Box) => {
@@ -203,15 +195,14 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                 onMouseDown={(e) => {
                     // deselect the shape when clicking on empty space
                     if (e.target === e.target.getStage()) {
-                        setSelectedElement(null);
-                        modal.id.setValue(null);
+                        modal.selectedArea.setValue(null);
                     }
                 }}
             >
                 <Layer>
                     <GridLinesBg width={1000} height={520} cellSize={25} />
                     {modal.dataSet.value?.areas.map((element: IFloorPlanArea) => {
-                        const isSelected = selectedElement?.id === element.id;
+                        const isSelected = modal.selectedArea.value?.id === element.id;
                         return (
                             <Group
                                 key={element.id}
@@ -266,7 +257,7 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                         );
                     })}
 
-                    {selectedElement && modal.edit.visible && (
+                    {modal.selectedArea.value && modal.edit.visible && (
                         <Transformer
                             ref={transformerRef}
                             boundBoxFunc={boundBoxFunc}
