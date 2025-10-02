@@ -147,6 +147,7 @@ const FloorPlanModal = () => {
                 modal.id.setValue(null);
                 modal.selectedArea.setValue(null);
                 modal.selectedTool.setValue("select");
+                modal.dataSet.setValue(null);
                 form.resetFields();
             },
             okText: "YES",
@@ -244,7 +245,9 @@ const FloorPlanModal = () => {
                                 </div>
                                 <CustomActionButtons
                                     actions={
-                                        modal.view.visible && !modal.edit.visible ? ["edit"] : []
+                                        modal.view.visible && !modal.edit.visible && floorLevel
+                                            ? ["edit"]
+                                            : []
                                     }
                                     handleEdit={() => modal.edit.setVisible(true)}
                                 />
@@ -343,7 +346,6 @@ const FloorPlanModal = () => {
                                                 danger
                                                 onClick={() => {
                                                     modal.edit.setVisible(false);
-                                                    modal.id.setValue(null);
                                                     modal.selectedArea.setValue(null);
                                                     modal.selectedTool.setValue("select");
                                                     form.resetFields();

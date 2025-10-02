@@ -225,11 +225,8 @@ const FloorPlanEditor = ({
                                 y={element.y}
                                 draggable={modal.edit.visible}
                                 onClick={() => handleElementClick(element)}
-                                onDragStart={() => bringToFront(element.id)}
+                                onDragStart={() => handleElementClick(element)}
                                 onDragEnd={(e) => handleOnDragEnd(e, element)}
-                                onDragMove={(e) => {
-                                    handleElementClick(element);
-                                }}
                                 dragBoundFunc={(pos) => {
                                     const stage = stageRef.current;
 
