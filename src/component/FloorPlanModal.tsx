@@ -35,6 +35,7 @@ interface FloorOption {
 
 const FloorPlanModal = () => {
     const [messageApi, contextHolderMessage] = message.useMessage();
+    const [modalAntd, contextHolderModal] = Modal.useModal();
     const { handleGetLandmarkById, loading: loadingGetLandmarkById } = useGetLandmarkById();
     const { handleGetFloorByLevelId, loading: loadingGetFloorByLevelId } = useGetFloorByLevelId();
     const { modal, drawer } = useContext(DrawerVisibilityContext);
@@ -129,15 +130,30 @@ const FloorPlanModal = () => {
         [modal.id.value]
     );
 
-    const onClose = () => {
-        modal.edit.setVisible(false);
-        modal.id.setValue(null);
-        modal.selectedTool.setValue("select");
+    const onModalClose = () => {
+        modalAntd.confirm({
+            title: "Confirm Discard",
+            content: (
+                <>
+                    <p>Are you sure you want to discard changes?</p>
+                    <p>This action cannot be undone.</p>
+                </>
+            ),
+            onOk: () => {
+                modal.view.setVisible(false);
+                modal.edit.setVisible(false);
+                modal.id.setValue(null);
+                modal.selectedTool.setValue("select");
+                modal.selectedArea.setValue(null);
+                form.resetFields();
+            },
+            okText: "YES",
+        });
     };
 
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(async (values: FieldType) => {
         console.log("values >> ", values);
-        onClose();
+        onModalClose();
     }, []);
 
     const loading = loadingGetLandmarkById || loadingGetFloorByLevelId;
@@ -145,15 +161,13 @@ const FloorPlanModal = () => {
     return (
         <>
             {contextHolderMessage}
+            {contextHolderModal}
             <Modal
                 title={modal.dataSet.value?.name ?? ""}
                 width={1500}
                 zIndex={500}
                 open={modal.view.visible || modal.edit.visible}
-                onCancel={() => {
-                    onClose();
-                    modal.view.setVisible(false);
-                }}
+                onCancel={() => onModalClose()}
                 footer={null}
                 destroyOnHidden // force re-mount to reset the states
             >
@@ -234,7 +248,7 @@ const FloorPlanModal = () => {
                                             handleDelete={() => {
                                                 if (modal.edit.visible) {
                                                     form.resetFields();
-                                                    modal.edit.setVisible(false);
+                                                    modal.selectedArea.setValue(null);
 
                                                     modal.dataSet.setValue((prev: IFloor) => ({
                                                         ...prev,
@@ -302,7 +316,16 @@ const FloorPlanModal = () => {
                             </div>
                             {modal.edit.visible && (
                                 <div className="flex gap-4 justify-end">
-                                    <Button danger onClick={onClose}>
+                                    <Button
+                                        danger
+                                        onClick={() => {
+                                            modal.edit.setVisible(false);
+                                            modal.id.setValue(null);
+                                            modal.selectedArea.setValue(null);
+                                            modal.selectedTool.setValue("select");
+                                            form.resetFields();
+                                        }}
+                                    >
                                         Cancel
                                     </Button>
                                     <Button
