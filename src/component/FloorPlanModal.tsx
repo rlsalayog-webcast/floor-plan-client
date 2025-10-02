@@ -143,18 +143,24 @@ const FloorPlanModal = () => {
                 modal.view.setVisible(false);
                 modal.edit.setVisible(false);
                 modal.id.setValue(null);
-                modal.selectedTool.setValue("select");
                 modal.selectedArea.setValue(null);
+                modal.selectedTool.setValue("select");
                 form.resetFields();
             },
             okText: "YES",
         });
     };
 
-    const onFinish: FormProps<FieldType>["onFinish"] = useCallback(async (values: FieldType) => {
-        console.log("values >> ", values);
-        onModalClose();
-    }, []);
+    const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
+        async (values: FieldType) => {
+            modal.edit.setVisible(false);
+            modal.id.setValue(null);
+            modal.selectedArea.setValue(null);
+            modal.selectedTool.setValue("select");
+            form.resetFields();
+        },
+        [modal.selectedArea.value]
+    );
 
     const loading = loadingGetLandmarkById || loadingGetFloorByLevelId;
 
@@ -283,8 +289,7 @@ const FloorPlanModal = () => {
                                         >
                                             <Input
                                                 readOnly={
-                                                    !modal.edit.visible ||
-                                                    !Boolean(modal.selectedArea.value)
+                                                    !modal.edit.visible || !modal.selectedArea.value
                                                 }
                                                 allowClear
                                             />
@@ -305,8 +310,7 @@ const FloorPlanModal = () => {
                                             <TextArea
                                                 rows={3}
                                                 readOnly={
-                                                    !modal.edit.visible ||
-                                                    !Boolean(modal.selectedArea.value)
+                                                    !modal.edit.visible || !modal.selectedArea.value
                                                 }
                                                 allowClear
                                             />
@@ -314,7 +318,7 @@ const FloorPlanModal = () => {
                                     </Form>
                                 </Card>
                             </div>
-                            {modal.edit.visible && (
+                            {modal.edit.visible && modal.selectedArea.value && (
                                 <div className="flex gap-4 justify-end">
                                     <Button
                                         danger
@@ -337,6 +341,14 @@ const FloorPlanModal = () => {
                                     </Button>
                                 </div>
                             )}
+                            <Button
+                                type="primary"
+                                onClick={() => {
+                                    modal.view.setVisible(false);
+                                }}
+                            >
+                                Submit
+                            </Button>
                         </div>
                     </div>
                 )}
