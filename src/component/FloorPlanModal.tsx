@@ -88,6 +88,9 @@ const FloorPlanModal = () => {
                             if (resp) {
                                 modal.dataSet.setValue(resp.data.getFloorByLevelId);
                             }
+                        } else {
+                            setFloorLevel("");
+                            modal.dataSet.setValue(null);
                         }
                     }
                 } catch (err) {
@@ -238,7 +241,10 @@ const FloorPlanModal = () => {
                                             label="Name"
                                             name="name"
                                             rules={[
-                                                { required: true, message: "Name is required" },
+                                                {
+                                                    required: modal.edit.visible,
+                                                    message: "Name is required",
+                                                },
                                             ]}
                                         >
                                             <Input
@@ -255,7 +261,7 @@ const FloorPlanModal = () => {
                                             name="description"
                                             rules={[
                                                 {
-                                                    required: true,
+                                                    required: modal.edit.visible,
                                                     message: "Description is required",
                                                 },
                                             ]}

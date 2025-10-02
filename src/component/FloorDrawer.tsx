@@ -10,7 +10,7 @@ interface FieldType {
 }
 
 const FloorDrawer = () => {
-    const { drawer } = useContext(DrawerVisibilityContext);
+    const { modal, drawer } = useContext(DrawerVisibilityContext);
     const [modalAntd, contextHolderModal] = Modal.useModal();
     const [messageApi, contextHolderMessage] = message.useMessage();
     const [form] = Form.useForm();
@@ -24,9 +24,9 @@ const FloorDrawer = () => {
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
         async (values: FieldType) => {
             setIsSubmitting(true);
-            if (drawer.add.visible) {
+            if (drawer.add.visible && modal.id.value) {
                 try {
-                    const resp = await handleCreateFloor({ landmarkId: "1", ...values });
+                    const resp = await handleCreateFloor({ landmarkId: modal.id.value, ...values });
                     if (resp) {
                         messageApi.open({
                             type: "success",
@@ -45,7 +45,7 @@ const FloorDrawer = () => {
                 }
             }
         },
-        [drawer.id.value, drawer.add.visible]
+        [drawer.id.value, drawer.add.visible, modal.id.value]
     );
 
     const onClose = useCallback(() => {

@@ -18,7 +18,7 @@ const FloorPlanEditor = () => {
 
     // Used for transformer / resizing
     useEffect(() => {
-        if (modal.selectedArea.value?.id && transformerRef.current) {
+        if (modal.selectedArea.value && transformerRef.current) {
             const stage = stageRef.current;
             if (stage) {
                 const node = stage.findOne(`#element-${modal.selectedArea.value.id}`);
@@ -30,7 +30,7 @@ const FloorPlanEditor = () => {
         } else if (transformerRef.current) {
             transformerRef.current.nodes([]);
         }
-    }, [modal.selectedArea.value?.id]);
+    }, [modal.selectedArea.value]);
 
     const bringToFront = (elementId: string) => {
         modal.dataSet.setValue((prev: IFloor) => {
