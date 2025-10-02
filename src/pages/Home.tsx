@@ -64,14 +64,14 @@ const Home = () => {
                                         <div>{e.category}</div>
                                         <div>{e.longitude}</div>
                                         <div>{e.latitude}</div>
-                                        <Button>Create Floor</Button>
                                         <Button
                                             onClick={() => {
                                                 modal.view.setVisible(true);
                                                 modal.id.setValue(e.id);
+                                                drawer.id.setValue(e.id);
                                             }}
                                         >
-                                            View Floor
+                                            View Floor Plan
                                         </Button>
                                     </div>
                                 </div>

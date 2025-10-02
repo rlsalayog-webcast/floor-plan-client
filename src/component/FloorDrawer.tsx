@@ -1,26 +1,52 @@
 import { PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button, Drawer, Form, Input, message, Modal, Space, type FormProps } from "antd";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useState } from "react";
+import { useCreateFloor } from "../api/hooks/useCreateFloor";
 import DrawerVisibilityContext from "../store/context/DrawerVisibilityContext";
 
 interface FieldType {
     name: string;
-    description: string;
+    level: string;
 }
 
 const FloorDrawer = () => {
     const { drawer } = useContext(DrawerVisibilityContext);
-    const [modal, contextHolderModal] = Modal.useModal();
+    const [modalAntd, contextHolderModal] = Modal.useModal();
     const [messageApi, contextHolderMessage] = message.useMessage();
     const [form] = Form.useForm();
+    const { handleCreateFloor, data, loading, error } = useCreateFloor();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const onClickSubmit = useCallback(() => {
         form.submit();
     }, [form]);
 
-    const onFinish: FormProps<FieldType>["onFinish"] = useCallback(async (values: FieldType) => {
-        console.log("onFinish >> ", values);
-    }, []);
+    const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
+        async (values: FieldType) => {
+            setIsSubmitting(true);
+            if (drawer.add.visible) {
+                try {
+                    const resp = await handleCreateFloor({ landmarkId: "1", ...values });
+                    if (resp) {
+                        messageApi.open({
+                            type: "success",
+                            content: "Floor added successfully!",
+                        });
+                        // refetch();
+                        drawer.add.setVisible(false);
+                    }
+                } catch (err) {
+                    messageApi.open({
+                        type: "error",
+                        content: "Failed to add Floor!",
+                    });
+                } finally {
+                    setIsSubmitting(false);
+                }
+            }
+        },
+        [drawer.id.value, drawer.add.visible]
+    );
 
     const onClose = useCallback(() => {
         drawer.view.setVisible(false);
@@ -30,7 +56,7 @@ const FloorDrawer = () => {
 
     const onCloseForm = useCallback(() => {
         if (form.isFieldsTouched()) {
-            modal.confirm({
+            modalAntd.confirm({
                 title: "Confirm Discard",
                 content: (
                     <>
@@ -44,10 +70,9 @@ const FloorDrawer = () => {
                 okText: "YES",
             });
         } else {
-            // setFileList([]);
             onClose();
         }
-    }, [form, modal, onClose]);
+    }, [form, modalAntd, onClose]);
 
     return (
         <>
@@ -64,6 +89,7 @@ const FloorDrawer = () => {
                         : ""
                 }
                 width={600}
+                zIndex={1000}
                 onClose={onCloseForm}
                 open={drawer.add.visible || drawer.view.visible || drawer.edit.visible}
                 extra={
@@ -81,7 +107,7 @@ const FloorDrawer = () => {
                                         ""
                                     )
                                 }
-                                // loading={isSubmitting}
+                                loading={isSubmitting}
                             >
                                 {drawer.add.visible ? "Add" : drawer.edit.visible ? "Save" : ""}
                             </Button>
