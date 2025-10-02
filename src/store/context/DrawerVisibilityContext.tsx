@@ -1,5 +1,5 @@
 import { createContext } from "react";
-import type { FloorPlanElement } from "../../types/FloorPlan";
+import type { IFloorPlanArea } from "../../types/FloorPlan";
 
 interface DrawerState {
     visible: boolean;
@@ -17,8 +17,8 @@ interface DataState {
 }
 
 interface SelectedElementState {
-    value: FloorPlanElement | null | undefined;
-    setValue: React.Dispatch<React.SetStateAction<FloorPlanElement | null | undefined>>;
+    value: IFloorPlanArea | null | undefined;
+    setValue: React.Dispatch<React.SetStateAction<IFloorPlanArea | null | undefined>>;
 }
 
 interface DrawerGroup {
@@ -64,7 +64,7 @@ const emptyDrawerGroup: DrawerGroup = {
     selectedElement: {
         value: undefined,
         setValue: (() => {}) as React.Dispatch<
-            React.SetStateAction<FloorPlanElement | null | undefined>
+            React.SetStateAction<IFloorPlanArea | null | undefined>
         >,
     },
 };

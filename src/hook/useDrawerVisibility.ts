@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FloorPlanElement } from "../types/FloorPlan";
+import type { IFloorPlanArea } from "../types/FloorPlan";
 
 const useDrawerVisibility = () => {
     const [isAddVisible, setIsAddVisible] = useState(false);
@@ -8,7 +8,7 @@ const useDrawerVisibility = () => {
     const [isRemoveVisible, setIsRemoveVisible] = useState(false);
     const [id, setId] = useState<string | null | undefined>(undefined);
     const [dataSet, setdataSet] = useState<any>(undefined);
-    const [selectedElement, setSelectedElement] = useState<FloorPlanElement | null | undefined>(
+    const [selectedElement, setSelectedElement] = useState<IFloorPlanArea | null | undefined>(
         undefined
     );
 

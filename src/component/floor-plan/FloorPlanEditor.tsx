@@ -2,11 +2,11 @@ import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { Box } from "konva/lib/shapes/Transformer";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Circle, Group, Layer, Rect, Stage, Text, Transformer } from "react-konva";
+import { Group, Layer, Rect, Stage, Text, Transformer } from "react-konva";
 import { getDragBoundFunc } from "../../helper/floor-plan";
 import useResponsiveStageSize from "../../hook/useResponsiveStageSize";
 import DrawerVisibilityContext from "../../store/context/DrawerVisibilityContext";
-import type { FloorPlanElement } from "../../types/FloorPlan";
+import type { IFloor, IFloorPlanArea } from "../../types/FloorPlan";
 import type { ISelect } from "../FloorPlanModal";
 import GridLinesBg from "./GridLinesBg";
 
@@ -18,7 +18,7 @@ interface IFloorPlanEditor {
 const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) => {
     const { modal } = useContext(DrawerVisibilityContext);
     const { stageSize, containerRef } = useResponsiveStageSize();
-    const [selectedElement, setSelectedElement] = useState<FloorPlanElement | null>(null);
+    const [selectedElement, setSelectedElement] = useState<IFloorPlanArea | null>(null);
     const stageRef = useRef<Konva.Stage>(null);
     const elementRefs = useRef(new Map());
     const transformerRef = useRef<Konva.Transformer>(null);
@@ -40,17 +40,22 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
     }, [selectedElement]);
 
     const bringToFront = (elementId: string) => {
-        modal.dataSet.setValue((prev: FloorPlanElement[]) => {
-            const elementIndex = prev.findIndex((el) => el.id === elementId);
+        modal.dataSet.setValue((prev: IFloor) => {
+            if (!prev.areas) return prev;
+
+            const elementIndex = prev.areas.findIndex((el) => el.id === elementId);
             if (elementIndex === -1) {
                 return prev;
             }
 
-            const newArray = [...prev];
-            const [element] = newArray.splice(elementIndex, 1);
-            newArray.push(element);
+            const newAreas = [...prev.areas];
+            const [element] = newAreas.splice(elementIndex, 1);
+            newAreas.push(element);
 
-            return newArray;
+            return {
+                ...prev,
+                areas: newAreas,
+            };
         });
     };
 
@@ -65,35 +70,36 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
         }
 
         if (selectedTool !== "select") {
-            const newElement: FloorPlanElement = {
+            const newElement: IFloorPlanArea = {
                 id: `element-${Date.now()}`,
-                type: selectedTool,
                 x: position.x,
                 y: position.y,
-                width: selectedTool === "rectangle" ? 100 : undefined,
-                height: selectedTool === "rectangle" ? 80 : undefined,
-                radius: selectedTool === "circle" ? 40 : undefined,
+                width: 100,
+                height: 80,
                 backgroundColor: "#1677ff",
                 textColor: "#ffffff",
-                attributes: {
-                    name: `${selectedTool} ${modal.dataSet.value.length + 1}`,
+                details: {
+                    name: `${selectedTool} ${modal.dataSet.value.areas.length + 1}`,
                     description: `A ${selectedTool} element`,
                 },
             };
 
-            modal.dataSet.setValue((prev: FloorPlanElement[]) => [...prev, newElement]);
+            modal.dataSet.setValue((prev: IFloor) => ({
+                ...prev,
+                areas: [...(prev.areas ?? []), newElement],
+            }));
             setSelectedTool("select");
         }
     };
 
-    const handleElementClick = (element: FloorPlanElement) => {
-        modal.id.setValue(element.id);
+    const handleElementClick = (element: IFloorPlanArea) => {
+        // modal.id.setValue(element.id);
         setSelectedElement(element);
         bringToFront(element.id);
     };
 
-    const handleOnDragEnd = (e: KonvaEventObject<DragEvent>, element: FloorPlanElement) => {
-        const updatedElements = modal.dataSet.value.map((el: FloorPlanElement) =>
+    const handleOnDragEnd = (e: KonvaEventObject<DragEvent>, element: IFloorPlanArea) => {
+        const updatedAreas = modal.dataSet.value.areas?.map((el: IFloorPlanArea) =>
             el.id === element.id
                 ? {
                       ...el,
@@ -102,7 +108,11 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
                   }
                 : el
         );
-        modal.dataSet.setValue(updatedElements);
+
+        modal.dataSet.setValue((prev: IFloor) => ({
+            ...prev,
+            areas: updatedAreas,
+        }));
     };
 
     const handleMouseOver = (e: KonvaEventObject<MouseEvent>) => {
@@ -135,28 +145,19 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
 
         let updatedElement = { ...selectedElement };
 
-        if (selectedElement.type === "rectangle") {
-            updatedElement = {
-                ...selectedElement,
-                x: node.x(),
-                y: node.y(),
-                width: Math.max(20, (selectedElement.width || 100) * scaleX),
-                height: Math.max(20, (selectedElement.height || 80) * scaleY),
-            };
-        } else if (selectedElement.type === "circle") {
-            updatedElement = {
-                ...selectedElement,
-                x: node.x(),
-                y: node.y(),
-                radius: Math.max(10, (selectedElement.radius || 40) * Math.max(scaleX, scaleY)),
-            };
-        }
+        updatedElement = {
+            ...selectedElement,
+            x: node.x(),
+            y: node.y(),
+            width: Math.max(20, (selectedElement.width || 100) * scaleX),
+            height: Math.max(20, (selectedElement.height || 80) * scaleY),
+        };
 
         // Update the element in the dataset
-        const updatedElements = modal.dataSet.value.map((el: FloorPlanElement) =>
+        const updatedElements = modal.dataSet.value.areas?.map((el: IFloorPlanArea) =>
             el.id === selectedElement.id ? updatedElement : el
         );
-        modal.dataSet.setValue(updatedElements);
+        modal.dataSet.setValue((prev: IFloor) => ({ ...prev, areas: updatedElements }));
         setSelectedElement(updatedElement);
     };
 
@@ -164,17 +165,6 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
         // Prevent resizing below minimum sizes
         if (newBox.width < 20 || newBox.height < 20) {
             return oldBox;
-        }
-
-        // --- Detect if we are working with a circle ---
-        // To stop resizing circle if it reached the max height of stage
-        const isCircle = selectedElement?.type === "circle";
-
-        if (isCircle) {
-            // 🔑 Keep the box square by locking aspect ratio
-            const size = Math.max(newBox.width, newBox.height); // take the larger dimension
-            newBox.width = size;
-            newBox.height = size;
         }
 
         // Ensure the shape stays within stage boundaries
@@ -187,15 +177,9 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
             newBox.y = 0;
         }
         if (newBox.x + newBox.width > stageSize.width) {
-            if (isCircle) {
-                return oldBox;
-            }
             newBox.width = stageSize.width - newBox.x;
         }
         if (newBox.y + newBox.height > stageSize.height) {
-            if (isCircle) {
-                return oldBox;
-            }
             newBox.height = stageSize.height - newBox.y;
         }
 
@@ -226,94 +210,62 @@ const FloorPlanEditor = ({ selectedTool, setSelectedTool }: IFloorPlanEditor) =>
             >
                 <Layer>
                     <GridLinesBg width={1000} height={520} cellSize={25} />
-                    {modal.dataSet.value?.map((element: FloorPlanElement) => {
+                    {modal.dataSet.value?.areas.map((element: IFloorPlanArea) => {
                         const isSelected = selectedElement?.id === element.id;
+                        return (
+                            <Group
+                                key={element.id}
+                                id={`element-${element.id}`}
+                                ref={(node) => {
+                                    if (node) {
+                                        elementRefs.current.set(element.id, node);
+                                    } else {
+                                        elementRefs.current.delete(element.id);
+                                    }
+                                }}
+                                x={element.x}
+                                y={element.y}
+                                draggable={modal.edit.visible}
+                                onClick={() => handleElementClick(element)}
+                                onDragStart={() => bringToFront(element.id)}
+                                onDragEnd={(e) => handleOnDragEnd(e, element)}
+                                onDragMove={(e) => {
+                                    handleElementClick(element);
+                                }}
+                                dragBoundFunc={(pos) => {
+                                    const stage = stageRef.current;
 
-                        if (element.type === "rectangle" || element.type === "circle") {
-                            return (
-                                <Group
-                                    key={element.id}
-                                    id={`element-${element.id}`}
-                                    ref={(node) => {
-                                        if (node) {
-                                            elementRefs.current.set(element.id, node);
-                                        } else {
-                                            elementRefs.current.delete(element.id);
-                                        }
-                                    }}
-                                    x={element.x}
-                                    y={element.y}
-                                    draggable={modal.edit.visible}
-                                    onClick={() => handleElementClick(element)}
-                                    onDragStart={() => bringToFront(element.id)}
-                                    onDragEnd={(e) => handleOnDragEnd(e, element)}
-                                    onDragMove={(e) => {
-                                        handleElementClick(element);
-                                        // getDragMoveHandler(e, element, elements);
-                                    }}
-                                    dragBoundFunc={(pos) => {
-                                        const stage = stageRef.current;
+                                    if (!stage) {
+                                        return pos;
+                                    }
 
-                                        if (!stage) {
-                                            return pos;
-                                        }
-
-                                        return getDragBoundFunc(pos, element, stage);
-                                    }}
-                                    onMouseOver={handleMouseOver}
-                                    onMouseOut={handleMouseOut}
-                                >
-                                    {element.type === "rectangle" ? (
-                                        <>
-                                            <Rect
-                                                width={element.width!}
-                                                height={element.height!}
-                                                fill={element.backgroundColor}
-                                                opacity={isSelected ? 0.7 : 1}
-                                                stroke={"black"}
-                                                strokeWidth={1}
-                                                strokeScaleEnabled={false}
-                                            />
-                                            <Text
-                                                text={element.attributes.name}
-                                                fontSize={12}
-                                                fill={element.textColor}
-                                                align="center"
-                                                verticalAlign="middle"
-                                                width={element.width ?? 20}
-                                                height={element.height ?? 20}
-                                            />
-                                        </>
-                                    ) : element.type === "circle" ? (
-                                        <>
-                                            <Circle
-                                                radius={element.radius!}
-                                                fill={element.backgroundColor}
-                                                opacity={isSelected ? 0.7 : 1}
-                                                stroke={"black"}
-                                                strokeWidth={1}
-                                                strokeScaleEnabled={false}
-                                            />
-                                            <Text
-                                                text={element.attributes.name}
-                                                fontSize={12}
-                                                fill={element.textColor}
-                                                align="center"
-                                                verticalAlign="middle"
-                                                width={element.radius ? element.radius * 2 : 40}
-                                                height={element.radius ? element.radius * 2 : 40}
-                                                offsetX={element.radius ? element.radius : 20}
-                                                offsetY={element.radius ? element.radius : 20}
-                                            />
-                                        </>
-                                    ) : null}
-                                </Group>
-                            );
-                        }
-                        return null;
+                                    return getDragBoundFunc(pos, element, stage);
+                                }}
+                                onMouseOver={handleMouseOver}
+                                onMouseOut={handleMouseOut}
+                            >
+                                <Rect
+                                    width={element.width!}
+                                    height={element.height!}
+                                    fill={element.backgroundColor}
+                                    opacity={isSelected ? 0.7 : 1}
+                                    stroke={"black"}
+                                    strokeWidth={1}
+                                    strokeScaleEnabled={false}
+                                />
+                                <Text
+                                    text={element.details?.name}
+                                    fontSize={12}
+                                    fill={element.textColor}
+                                    align="center"
+                                    verticalAlign="middle"
+                                    width={element.width ?? 20}
+                                    height={element.height ?? 20}
+                                />
+                            </Group>
+                        );
                     })}
 
-                    {/* FIXED: Single Transformer outside the map loop */}
                     {selectedElement && modal.edit.visible && (
                         <Transformer
                             ref={transformerRef}

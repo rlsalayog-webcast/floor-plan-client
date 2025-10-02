@@ -1,27 +1,23 @@
-export interface FloorPlanElement {
-    id: string;
-    type: string;
-    x: number;
-    y: number;
-    width?: number;
-    height?: number;
-    radius?: number;
-    backgroundColor: string;
-    textColor: string;
-    attributes: {
-        name: string;
-        description: string;
-        [key: string]: any;
-    };
+export interface IFloorPlanAreaDetails {
+    name: string;
+    description: string;
 }
 
-export interface FloorPlan {
+export interface IFloorPlanArea {
     id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    backgroundColor: string;
+    textColor: string;
+    details: IFloorPlanAreaDetails;
+}
+
+export interface IFloor {
+    id: string;
+    level: string;
     name: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-    elements: FloorPlanElement[];
-    createdAt: Date;
-    updatedAt: Date;
+    description?: string;
+    areas?: IFloorPlanArea[];
 }

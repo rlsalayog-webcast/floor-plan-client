@@ -17,13 +17,13 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useGetFloorByLevelId } from "../api/hooks/useGetFloorByLevel";
 import { useGetLandmarkById } from "../api/hooks/useGetLandmarkById";
 import DrawerVisibilityContext from "../store/context/DrawerVisibilityContext";
-import type { FloorPlanElement } from "../types/FloorPlan";
+import type { IFloor, IFloorPlanArea } from "../types/FloorPlan";
 import CustomActionButtons from "./CustomActionButtons";
 import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
 
 const { TextArea } = Input;
 
-export type ISelect = "select" | "rectangle" | "circle" | "triangle";
+export type ISelect = "select" | "floor";
 
 interface FieldType {
     name: string;
@@ -194,16 +194,6 @@ const FloorPlanModal = () => {
                                         modal.view.visible && !modal.edit.visible ? ["edit"] : []
                                     }
                                     handleEdit={() => modal.edit.setVisible(true)}
-                                    handleDelete={() => {
-                                        if (modal.edit.visible) {
-                                            modal.dataSet.setValue((prev: FloorPlanElement[]) =>
-                                                prev.filter(
-                                                    (el: FloorPlanElement) =>
-                                                        el.id !== modal.id.value
-                                                )
-                                            );
-                                        }
-                                    }}
                                 />
                                 {modal.edit.visible && (
                                     <div className="flex gap-x-4">
@@ -212,12 +202,10 @@ const FloorPlanModal = () => {
                                             onChange={(e) => setSelectedTool(e.target.value)}
                                         >
                                             <Radio.Button value="select">Select</Radio.Button>
-                                            <Radio.Button value="rectangle">Floor</Radio.Button>
-                                            {/* <Radio.Button value="circle">Circle</Radio.Button>
-                                    <Radio.Button value="triangle">Triangle</Radio.Button> */}
+                                            <Radio.Button value="area">Floor</Radio.Button>
                                         </Radio.Group>
                                         {/* <ColorPicker defaultValue="#1677ff" />
-                                <ColorPicker defaultValue="#1677ff" /> */}
+                                            <ColorPicker defaultValue="#1677ff" /> */}
                                     </div>
                                 )}
                                 <Card
@@ -231,13 +219,13 @@ const FloorPlanModal = () => {
                                             }
                                             handleDelete={() => {
                                                 if (modal.edit.visible) {
-                                                    modal.dataSet.setValue(
-                                                        (prev: FloorPlanElement[]) =>
-                                                            prev.filter(
-                                                                (el: FloorPlanElement) =>
-                                                                    el.id !== modal.id.value
-                                                            )
-                                                    );
+                                                    modal.dataSet.setValue((prev: IFloor) => ({
+                                                        ...prev,
+                                                        areas: prev.areas?.filter(
+                                                            (el: IFloorPlanArea) =>
+                                                                el.id !== modal.id.value
+                                                        ),
+                                                    }));
                                                 }
                                             }}
                                         />
