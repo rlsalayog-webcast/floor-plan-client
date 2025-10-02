@@ -191,7 +191,7 @@ const FloorPlanEditor = ({
     };
 
     return (
-        <div ref={containerRef} className="col-span-2">
+        <div ref={containerRef}>
             <Stage
                 ref={stageRef}
                 width={stageSize.width}

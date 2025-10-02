@@ -16,6 +16,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useGetFloorByLevelId } from "../api/hooks/useGetFloorByLevel";
 import { useGetLandmarkById } from "../api/hooks/useGetLandmarkById";
+import { useUpdateFloorAreas } from "../api/hooks/useUpdateFloorAreas";
 import DrawerVisibilityContext from "../store/context/DrawerVisibilityContext";
 import type { IFloor, IFloorPlanArea } from "../types/FloorPlan";
 import CustomActionButtons from "./CustomActionButtons";
@@ -38,6 +39,7 @@ const FloorPlanModal = () => {
     const [modalAntd, contextHolderModal] = Modal.useModal();
     const { handleGetLandmarkById, loading: loadingGetLandmarkById } = useGetLandmarkById();
     const { handleGetFloorByLevelId, loading: loadingGetFloorByLevelId } = useGetFloorByLevelId();
+    const { handleUpdateFloorAreas, loading: loadingUpdateFloorAreas } = useUpdateFloorAreas();
     const { modal, drawer } = useContext(DrawerVisibilityContext);
     const [form] = Form.useForm();
     const [floorLevel, setFloorLevel] = useState<string | undefined>("");
@@ -153,8 +155,22 @@ const FloorPlanModal = () => {
 
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
         async (values: FieldType) => {
+            modal.dataSet.setValue((prev: any) => ({
+                ...prev,
+                areas: prev.areas.map((area: any) =>
+                    area.id === modal.selectedArea.value.id
+                        ? {
+                              ...area,
+                              details: {
+                                  ...area.details,
+                                  ...values,
+                              },
+                          }
+                        : area
+                ),
+            }));
+
             modal.edit.setVisible(false);
-            modal.id.setValue(null);
             modal.selectedArea.setValue(null);
             modal.selectedTool.setValue("select");
             form.resetFields();
@@ -169,10 +185,10 @@ const FloorPlanModal = () => {
             {contextHolderMessage}
             {contextHolderModal}
             <Modal
-                title={modal.dataSet.value?.name ?? ""}
+                title="Floor Plan"
                 width={1500}
                 zIndex={500}
-                open={modal.view.visible || modal.edit.visible}
+                open={modal.view.visible}
                 onCancel={() => onModalClose()}
                 footer={null}
                 destroyOnHidden // force re-mount to reset the states
@@ -192,18 +208,23 @@ const FloorPlanModal = () => {
 
                 {!loading && (
                     <div className="grid grid-cols-3 gap-10">
-                        <FloorPlanEditor
-                            handleAreaClick={({ details }) => {
-                                form.setFieldsValue({
-                                    name: details.name,
-                                    description: details.description,
-                                });
-                            }}
-                            handleStageOpenAreaClick={() => {
-                                modal.selectedArea.setValue(null);
-                                form.resetFields();
-                            }}
-                        />
+                        <div className="col-span-2">
+                            <p className="text-base !mb-4 italic">
+                                {modal.dataSet.value?.name ?? ""}
+                            </p>
+                            <FloorPlanEditor
+                                handleAreaClick={({ details }) => {
+                                    form.setFieldsValue({
+                                        name: details.name,
+                                        description: details.description,
+                                    });
+                                }}
+                                handleStageOpenAreaClick={() => {
+                                    modal.selectedArea.setValue(null);
+                                    form.resetFields();
+                                }}
+                            />
+                        </div>
                         <div className="col-span-1 flex flex-col justify-between">
                             <div className="!space-y-6">
                                 <div className="flex gap-x-4">
@@ -316,39 +337,98 @@ const FloorPlanModal = () => {
                                             />
                                         </Form.Item>
                                     </Form>
+                                    {modal.edit.visible && modal.selectedArea.value && (
+                                        <div className="flex gap-4 justify-end">
+                                            <Button
+                                                danger
+                                                onClick={() => {
+                                                    modal.edit.setVisible(false);
+                                                    modal.id.setValue(null);
+                                                    modal.selectedArea.setValue(null);
+                                                    modal.selectedTool.setValue("select");
+                                                    form.resetFields();
+                                                }}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                onClick={() => {
+                                                    form.submit();
+                                                }}
+                                            >
+                                                Save
+                                            </Button>
+                                        </div>
+                                    )}
                                 </Card>
-                            </div>
-                            {modal.edit.visible && modal.selectedArea.value && (
-                                <div className="flex gap-4 justify-end">
+                                <div className="flex justify-end gap-x-4">
                                     <Button
-                                        danger
                                         onClick={() => {
                                             modal.edit.setVisible(false);
+                                            modal.view.setVisible(false);
                                             modal.id.setValue(null);
                                             modal.selectedArea.setValue(null);
-                                            modal.selectedTool.setValue("select");
+                                            modal.dataSet.setValue(null);
                                             form.resetFields();
                                         }}
                                     >
                                         Cancel
                                     </Button>
                                     <Button
-                                        onClick={() => {
-                                            form.submit();
+                                        type="primary"
+                                        onClick={async () => {
+                                            if (!modal.id.value) {
+                                                return;
+                                            }
+                                            const cleanedAreas = modal.dataSet.value.areas.map(
+                                                (area: any) => {
+                                                    const isTempId =
+                                                        typeof area.id === "string" &&
+                                                        area.id.startsWith("element-");
+
+                                                    return {
+                                                        id: isTempId ? undefined : area.id, // remove if temp
+                                                        x: area.x,
+                                                        y: area.y,
+                                                        width: area.width,
+                                                        height: area.height,
+                                                        backgroundColor: area.backgroundColor,
+                                                        textColor: area.textColor,
+                                                        details: {
+                                                            name: area.details.name,
+                                                            description: area.details.description,
+                                                        },
+                                                    };
+                                                }
+                                            );
+
+                                            const resp = await handleUpdateFloorAreas({
+                                                landmarkId: modal.id.value,
+                                                floorId: modal.dataSet.value.id,
+                                                areas: cleanedAreas,
+                                            });
+
+                                            if (!resp) {
+                                                messageApi.open({
+                                                    type: "error",
+                                                    content: "Failed to update Floor Plan!",
+                                                });
+                                                return;
+                                            }
+
+                                            modal.edit.setVisible(false);
+                                            modal.view.setVisible(false);
+                                            modal.id.setValue(null);
+                                            modal.selectedArea.setValue(null);
+                                            modal.dataSet.setValue(null);
+                                            form.resetFields();
                                         }}
+                                        loading={loadingUpdateFloorAreas}
                                     >
-                                        Save
+                                        Save Floor Plan
                                     </Button>
                                 </div>
-                            )}
-                            <Button
-                                type="primary"
-                                onClick={() => {
-                                    modal.view.setVisible(false);
-                                }}
-                            >
-                                Submit
-                            </Button>
+                            </div>
                         </div>
                     </div>
                 )}

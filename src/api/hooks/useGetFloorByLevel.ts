@@ -8,7 +8,9 @@ interface IGetFloorByLevelIdInput {
 }
 
 export const useGetFloorByLevelId = () => {
-    const [variables, { data, loading, error }] = useLazyQuery<any>(GET_FLOOR_BY_LEVEL_ID_QUERY);
+    const [variables, { data, loading, error }] = useLazyQuery<any>(GET_FLOOR_BY_LEVEL_ID_QUERY, {
+        fetchPolicy: "network-only",
+    });
 
     const handleGetFloorByLevelId = useCallback(
         (info: IGetFloorByLevelIdInput) => {
