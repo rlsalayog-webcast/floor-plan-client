@@ -3,6 +3,7 @@ import type { KonvaEventObject } from "konva/lib/Node";
 import type { Box } from "konva/lib/shapes/Transformer";
 import { useContext, useEffect, useRef } from "react";
 import { Group, Layer, Rect, Stage, Text, Transformer } from "react-konva";
+import { TEMP_ID_FORMAT } from "../../constant/tempIdFormat";
 import { getDragBoundFunc } from "../../helper/floor-plan";
 import useResponsiveStageSize from "../../hook/useResponsiveStageSize";
 import DrawerVisibilityContext from "../../store/context/DrawerVisibilityContext";
@@ -27,7 +28,7 @@ const FloorPlanEditor = ({
         if (modal.selectedArea.value && transformerRef.current) {
             const stage = stageRef.current;
             if (stage) {
-                const node = stage.findOne(`#element-${modal.selectedArea.value.id}`);
+                const node = stage.findOne(`#${TEMP_ID_FORMAT}${modal.selectedArea.value.id}`);
                 if (node) {
                     transformerRef.current.nodes([node]);
                     transformerRef.current.getLayer()?.batchDraw();
@@ -70,7 +71,7 @@ const FloorPlanEditor = ({
 
         if (modal.selectedTool.value !== "select") {
             const newElement: IFloorPlanArea = {
-                id: `element-${Date.now()}`,
+                id: `${TEMP_ID_FORMAT}${Date.now()}`,
                 x: position.x,
                 y: position.y,
                 width: 100,
@@ -213,7 +214,7 @@ const FloorPlanEditor = ({
                         return (
                             <Group
                                 key={element.id}
-                                id={`element-${element.id}`}
+                                id={`${TEMP_ID_FORMAT}${element.id}`}
                                 ref={(node) => {
                                     if (node) {
                                         elementRefs.current.set(element.id, node);

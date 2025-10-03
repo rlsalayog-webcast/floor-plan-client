@@ -23,6 +23,7 @@ import { useDeleteFloor } from "../api/hooks/useDeleteFloor";
 import { useGetFloorByLevelId } from "../api/hooks/useGetFloorByLevel";
 import { useGetLandmarkById } from "../api/hooks/useGetLandmarkById";
 import { useUpdateFloorAreas } from "../api/hooks/useUpdateFloorAreas";
+import { TEMP_ID_FORMAT } from "../constant/tempIdFormat";
 import DrawerVisibilityContext from "../store/context/DrawerVisibilityContext";
 import type { IFloor, IFloorPlanArea } from "../types/FloorPlan";
 import CustomActionButtons from "./CustomActionButtons";
@@ -430,7 +431,7 @@ const FloorPlanModal = () => {
                                                     (area: any) => {
                                                         const isTempId =
                                                             typeof area.id === "string" &&
-                                                            area.id.startsWith("element-");
+                                                            area.id.startsWith(TEMP_ID_FORMAT);
 
                                                         return {
                                                             id: isTempId ? undefined : area.id, // remove if temp
