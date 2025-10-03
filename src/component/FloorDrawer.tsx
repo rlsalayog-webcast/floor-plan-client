@@ -1,10 +1,13 @@
 import { PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button, Drawer, Form, Input, message, Modal, Space, type FormProps } from "antd";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import { useCreateFloor } from "../api/hooks/useCreateFloor";
+import { useGetFloorByLevelId } from "../api/hooks/useGetFloorByLevel";
+import { useUpdateFloor } from "../api/hooks/useUpdateFloor";
 import DrawerVisibilityContext from "../store/context/DrawerVisibilityContext";
 
 interface FieldType {
+    id?: string;
     name: string;
     level: string;
 }
@@ -14,8 +17,41 @@ const FloorDrawer = () => {
     const [modalAntd, contextHolderModal] = Modal.useModal();
     const [messageApi, contextHolderMessage] = message.useMessage();
     const [form] = Form.useForm();
-    const { handleCreateFloor, data, loading, error } = useCreateFloor();
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { handleCreateFloor, loading: loadingCreateFloor } = useCreateFloor();
+    const { handleGetFloorByLevelId, loading: loadingGetFloorByLevelId } = useGetFloorByLevelId();
+    const { handleUpdateFloor, loading: loadingUpdateFloor } = useUpdateFloor();
+
+    useEffect(() => {
+        const fetch = async () => {
+            if (
+                drawer.edit.visible &&
+                modal.id.value &&
+                drawer.id.value &&
+                modal.selectedFloorLevelId.value
+            ) {
+                try {
+                    const resp = await handleGetFloorByLevelId({
+                        landmarkId: modal.id.value,
+                        levelId: modal.selectedFloorLevelId.value,
+                    });
+
+                    if (!resp) {
+                        throw new Error("Failed to fetch floor data");
+                    }
+
+                    form.setFieldsValue({
+                        ...resp.data.getFloorByLevelId,
+                    });
+                } catch (error) {
+                    messageApi.open({
+                        type: "error",
+                        content: "Something went wrong!",
+                    });
+                }
+            }
+        };
+        fetch();
+    }, [drawer.edit.visible, modal.id.value, drawer.id.value, modal.selectedFloorLevelId.value]);
 
     const onClickSubmit = useCallback(() => {
         form.submit();
@@ -23,10 +59,10 @@ const FloorDrawer = () => {
 
     const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
         async (values: FieldType) => {
-            setIsSubmitting(true);
             if (drawer.add.visible && modal.id.value) {
                 try {
                     const resp = await handleCreateFloor({ landmarkId: modal.id.value, ...values });
+
                     if (resp) {
                         messageApi.open({
                             type: "success",
@@ -40,12 +76,44 @@ const FloorDrawer = () => {
                         type: "error",
                         content: "Failed to add Floor!",
                     });
-                } finally {
-                    setIsSubmitting(false);
+                }
+            }
+
+            if (drawer.edit.visible && modal.id.value) {
+                try {
+                    if (!modal.selectedFloorLevelId.value) {
+                        return;
+                    }
+
+                    const resp = await handleUpdateFloor({
+                        landmarkId: modal.id.value,
+                        id: modal.selectedFloorLevelId.value,
+                        ...values,
+                    });
+
+                    if (resp) {
+                        messageApi.open({
+                            type: "success",
+                            content: "Floor added successfully!",
+                        });
+                        drawer.refetch.setValue((prev) => !prev);
+                        drawer.edit.setVisible(false);
+                    }
+                } catch (err) {
+                    messageApi.open({
+                        type: "error",
+                        content: "Failed to update Floor!",
+                    });
                 }
             }
         },
-        [drawer.id.value, drawer.add.visible, modal.id.value]
+        [
+            drawer.add.visible,
+            drawer.edit.visible,
+            drawer.id.value,
+            modal.id.value,
+            modal.selectedFloorLevelId.value,
+        ]
     );
 
     const onClose = useCallback(() => {
@@ -107,7 +175,7 @@ const FloorDrawer = () => {
                                         ""
                                     )
                                 }
-                                loading={isSubmitting}
+                                loading={loadingCreateFloor || loadingUpdateFloor}
                             >
                                 {drawer.add.visible ? "Add" : drawer.edit.visible ? "Save" : ""}
                             </Button>
@@ -119,7 +187,7 @@ const FloorDrawer = () => {
                         form.resetFields();
                     }
                 }}
-                // loading={isLoading}
+                loading={loadingGetFloorByLevelId}
             >
                 <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
                     <Form.Item

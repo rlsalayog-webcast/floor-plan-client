@@ -25,7 +25,14 @@ interface DrawerGroup {
 }
 
 interface DrawerContextType {
-    modal: DrawerGroup & { selectedTool: DataState; selectedArea: DataState };
+    modal: DrawerGroup & {
+        selectedTool: DataState;
+        selectedArea: DataState;
+        selectedFloorLevelId: {
+            value: string | undefined;
+            setValue: React.Dispatch<React.SetStateAction<string | undefined>>;
+        };
+    };
     drawer: DrawerGroup & {
         refetch: { value: boolean; setValue: React.Dispatch<React.SetStateAction<boolean>> };
     };
@@ -68,6 +75,10 @@ const initialState: DrawerContextType = {
         selectedArea: {
             value: undefined,
             setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
+        },
+        selectedFloorLevelId: {
+            value: undefined,
+            setValue: (() => {}) as React.Dispatch<React.SetStateAction<string | undefined>>,
         },
     },
     drawer: {

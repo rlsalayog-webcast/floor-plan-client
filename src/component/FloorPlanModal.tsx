@@ -1,4 +1,4 @@
-import { DownOutlined } from "@ant-design/icons";
+import { CheckCircleFilled, DownOutlined } from "@ant-design/icons";
 import {
     Button,
     Card,
@@ -14,6 +14,7 @@ import {
     type MenuProps,
 } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
+import { useDeleteFloor } from "../api/hooks/useDeleteFloor";
 import { useGetFloorByLevelId } from "../api/hooks/useGetFloorByLevel";
 import { useGetLandmarkById } from "../api/hooks/useGetLandmarkById";
 import { useUpdateFloorAreas } from "../api/hooks/useUpdateFloorAreas";
@@ -40,9 +41,9 @@ const FloorPlanModal = () => {
     const { handleGetLandmarkById, loading: loadingGetLandmarkById } = useGetLandmarkById();
     const { handleGetFloorByLevelId, loading: loadingGetFloorByLevelId } = useGetFloorByLevelId();
     const { handleUpdateFloorAreas, loading: loadingUpdateFloorAreas } = useUpdateFloorAreas();
+    const { handleDeleteFloor } = useDeleteFloor();
     const { modal, drawer } = useContext(DrawerVisibilityContext);
     const [form] = Form.useForm();
-    const [floorLevel, setFloorLevel] = useState<string | undefined>(undefined);
     const [floorOptions, setFloorOptions] = useState<FloorOption[]>([]);
 
     const items: MenuProps["items"] = [
@@ -63,7 +64,48 @@ const FloorPlanModal = () => {
         {
             key: "3",
             label: "Delete",
-            onClick: () => {},
+            onClick: () => {
+                modalAntd.confirm({
+                    title: "Confirm Deletion",
+                    content: (
+                        <>
+                            <p>Are you sure you want to delete this floor?</p>
+                            <p>This action cannot be undone.</p>
+                        </>
+                    ),
+                    onOk: async () => {
+                        try {
+                            if (!modal.id.value) {
+                                return;
+                            }
+
+                            const resp = await handleDeleteFloor({
+                                landmarkId: modal.id.value,
+                                id: modal.dataSet.value?.id,
+                            });
+
+                            if (!resp) {
+                                throw new Error("Failed to delete Floor!");
+                            }
+
+                            messageApi.open({
+                                type: "success",
+                                icon: <CheckCircleFilled />,
+                                content: "Floor was deleted successfully!",
+                            });
+                            drawer.refetch.setValue((prev) => !prev);
+                            return;
+                        } catch (error) {
+                            messageApi.open({
+                                type: "error",
+                                content: "Something went wrong!",
+                            });
+                        }
+                    },
+                    okText: "DELETE",
+                    okType: "danger",
+                });
+            },
         },
     ];
 
@@ -81,7 +123,7 @@ const FloorPlanModal = () => {
                         );
                         setFloorOptions(options ?? []);
                         if (options.length > 0) {
-                            setFloorLevel(options[0].value);
+                            modal.selectedFloorLevelId.setValue(options[0].value);
 
                             const resp = await handleGetFloorByLevelId({
                                 landmarkId: modal.id.value,
@@ -92,7 +134,7 @@ const FloorPlanModal = () => {
                                 modal.dataSet.setValue(resp.data.getFloorByLevelId);
                             }
                         } else {
-                            setFloorLevel(undefined);
+                            modal.selectedFloorLevelId.setValue(undefined);
                             modal.dataSet.setValue(null);
                         }
                     }
@@ -115,7 +157,7 @@ const FloorPlanModal = () => {
             modal.selectedArea.setValue(null);
             form.resetFields();
 
-            setFloorLevel(val);
+            modal.selectedFloorLevelId.setValue(val);
 
             if (modal.id.value) {
                 const resp = await handleGetFloorByLevelId({
@@ -132,7 +174,7 @@ const FloorPlanModal = () => {
     );
 
     const onModalClose = () => {
-        if (!floorLevel) {
+        if (!modal.selectedFloorLevelId.value) {
             modal.view.setVisible(false);
             modal.edit.setVisible(false);
             modal.id.setValue(null);
@@ -241,7 +283,7 @@ const FloorPlanModal = () => {
                                     <Select
                                         placeholder="Select Floor Level"
                                         style={{ width: 160 }}
-                                        value={floorLevel}
+                                        value={modal.selectedFloorLevelId.value}
                                         onChange={onChangeSelect}
                                         options={floorOptions}
                                     />
@@ -254,7 +296,9 @@ const FloorPlanModal = () => {
                                 </div>
                                 <CustomActionButtons
                                     actions={
-                                        modal.view.visible && !modal.edit.visible && floorLevel
+                                        modal.view.visible &&
+                                        !modal.edit.visible &&
+                                        modal.selectedFloorLevelId.value
                                             ? ["edit"]
                                             : []
                                     }
@@ -371,7 +415,7 @@ const FloorPlanModal = () => {
                                         </div>
                                     )}
                                 </Card>
-                                {floorLevel && (
+                                {modal.selectedFloorLevelId.value && (
                                     <div className="flex justify-end gap-x-4">
                                         <Button
                                             onClick={() => {

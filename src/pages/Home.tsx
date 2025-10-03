@@ -17,6 +17,7 @@ const Home = () => {
     const { data, loading, error } = useGetAllLandmark();
     const [selectedTool, setSelectedTool] = useState<ISelect>("select");
     const [selectedArea, setSelectedArea] = useState(undefined);
+    const [selectedFloorLevelId, setSelectedFloorLevelId] = useState<string | undefined>(undefined);
     const [refetch, setRefetch] = useState(false);
 
     return (
@@ -29,6 +30,10 @@ const Home = () => {
                         selectedArea: {
                             value: selectedArea,
                             setValue: setSelectedArea,
+                        },
+                        selectedFloorLevelId: {
+                            value: selectedFloorLevelId,
+                            setValue: setSelectedFloorLevelId,
                         },
                     },
                     drawer: { ...drawer, refetch: { value: refetch, setValue: setRefetch } },
