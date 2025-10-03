@@ -1,6 +1,6 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useContext, useEffect, useRef } from "react";
+import { useCallback, useContext, useEffect, useRef } from "react";
 import { Group, Layer, Rect, Stage, Text, Transformer } from "react-konva";
 import { TEMP_ID_FORMAT } from "../../constant";
 import { handleConstrainBoxToStageOnDrag } from "../../helper/floor-plan/handleConstrainBoxToStageOnDrag";
@@ -25,7 +25,9 @@ const FloorPlanEditor = ({
     const elementRefs = useRef(new Map());
     const transformerRef = useRef<Konva.Transformer>(null);
 
-    // Update transformer when selected area changes for resizing
+    /**
+     * Updates the Konva Transformer whenever the selected area changes.
+     */
     useEffect(() => {
         if (modal.selectedArea.value && transformerRef.current) {
             const stage = stageRef.current;
@@ -41,58 +43,67 @@ const FloorPlanEditor = ({
         }
     }, [modal.selectedArea.value]);
 
-    const moveAreaToFront = (elementId: string) => {
-        modal.dataSet.setValue((prev: IFloor) => {
-            if (!prev.areas) return prev;
+    /**
+     * Moves the specified area to the front of the stage by updating the areas array.
+     */
+    const moveAreaToFront = useCallback(
+        (elementId: string) => {
+            modal.dataSet.setValue((prev: IFloor) => {
+                if (!prev.areas) return prev;
 
-            const elementIndex = prev.areas.findIndex((el) => el.id === elementId);
-            if (elementIndex === -1) {
-                return prev;
-            }
+                const elementIndex = prev.areas.findIndex((el) => el.id === elementId);
+                if (elementIndex === -1) {
+                    return prev;
+                }
 
-            const newAreas = [...prev.areas];
-            const [element] = newAreas.splice(elementIndex, 1);
-            newAreas.push(element);
+                const newAreas = [...prev.areas];
+                const [element] = newAreas.splice(elementIndex, 1);
+                newAreas.push(element);
 
-            return {
-                ...prev,
-                areas: newAreas,
-            };
-        });
-    };
+                return {
+                    ...prev,
+                    areas: newAreas,
+                };
+            });
+        },
+        [modal.dataSet]
+    );
 
     /**
-     * To add new areas on stage click
+     * Handles adding a new area on the stage when the user clicks.
      */
-    const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
-        const position = e.target.getStage()?.getPointerPosition();
+    const handleStageClick = useCallback(
+        (e: Konva.KonvaEventObject<MouseEvent>) => {
+            const position = e.target.getStage()?.getPointerPosition();
 
-        if (!position) {
-            return;
-        }
+            if (!position) {
+                return;
+            }
 
-        if (modal.selectedTool.value !== "select") {
-            const newElement: IFloorPlanArea = {
-                id: `${TEMP_ID_FORMAT}${Date.now()}`,
-                x: position.x,
-                y: position.y,
-                width: 100,
-                height: 80,
-                backgroundColor: "#1677ff",
-                textColor: "#ffffff",
-                details: {
-                    name: `${modal.selectedTool.value} ${modal.dataSet.value.areas.length + 1}`,
-                    description: `A ${modal.selectedTool.value} element`,
-                },
-            };
+            if (modal.selectedTool.value !== "select") {
+                const newElement: IFloorPlanArea = {
+                    id: `${TEMP_ID_FORMAT}${Date.now()}`,
+                    x: position.x,
+                    y: position.y,
+                    width: 100,
+                    height: 80,
+                    backgroundColor: "#1677ff",
+                    textColor: "#ffffff",
+                    details: {
+                        name: `${modal.selectedTool.value} ${modal.dataSet.value.areas.length + 1}`,
+                        description: `A ${modal.selectedTool.value} element`,
+                    },
+                };
 
-            modal.dataSet.setValue((prev: IFloor) => ({
-                ...prev,
-                areas: [...(prev.areas ?? []), newElement],
-            }));
-            modal.selectedTool.setValue("select");
-        }
-    };
+                modal.dataSet.setValue((prev: IFloor) => ({
+                    ...prev,
+                    areas: [...(prev.areas ?? []), newElement],
+                }));
+                modal.selectedTool.setValue("select");
+            }
+        },
+        [modal.selectedTool.value, modal.dataSet]
+    );
 
     const handleElementClick = (element: IFloorPlanArea) => {
         modal.selectedArea.setValue(element);
@@ -100,36 +111,44 @@ const FloorPlanEditor = ({
         handleAreaClick(element);
     };
 
-    const handleOnDragEnd = (e: KonvaEventObject<DragEvent>, element: IFloorPlanArea) => {
-        const updatedAreas = modal.dataSet.value.areas?.map((el: IFloorPlanArea) =>
-            el.id === element.id
-                ? {
-                      ...el,
-                      x: e.target.x(),
-                      y: e.target.y(),
-                  }
-                : el
-        );
+    const handleOnDragEnd = useCallback(
+        (e: KonvaEventObject<DragEvent>, element: IFloorPlanArea) => {
+            const updatedAreas = modal.dataSet.value.areas?.map((el: IFloorPlanArea) =>
+                el.id === element.id
+                    ? {
+                          ...el,
+                          x: e.target.x(),
+                          y: e.target.y(),
+                      }
+                    : el
+            );
 
-        modal.dataSet.setValue((prev: IFloor) => ({
-            ...prev,
-            areas: updatedAreas,
-        }));
-    };
+            modal.dataSet.setValue((prev: IFloor) => ({
+                ...prev,
+                areas: updatedAreas,
+            }));
+        },
+        [modal.dataSet]
+    );
 
-    const handleMouseOver = (e: KonvaEventObject<MouseEvent>) => {
+    const handleMouseOver = useCallback(
+        (e: KonvaEventObject<MouseEvent>) => {
+            const stage = e.target.getStage();
+
+            if (stage && modal.edit.visible) {
+                stage.container().style.cursor = "move";
+            }
+        },
+        [modal.edit.visible]
+    );
+
+    const handleMouseOut = useCallback((e: KonvaEventObject<MouseEvent>) => {
         const stage = e.target.getStage();
-        if (stage && modal.edit.visible) {
-            stage.container().style.cursor = "move";
-        }
-    };
 
-    const handleMouseOut = (e: KonvaEventObject<MouseEvent>) => {
-        const stage = e.target.getStage();
         if (stage) {
             stage.container().style.cursor = "default";
         }
-    };
+    }, []);
 
     return (
         <div ref={containerRef}>
