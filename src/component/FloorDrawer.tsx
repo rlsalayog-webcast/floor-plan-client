@@ -32,7 +32,7 @@ const FloorDrawer = () => {
                             type: "success",
                             content: "Floor added successfully!",
                         });
-                        // refetch();
+                        drawer.refetch.setValue((prev) => !prev);
                         drawer.add.setVisible(false);
                     }
                 } catch (err) {

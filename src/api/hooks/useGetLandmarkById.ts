@@ -3,7 +3,9 @@ import { useCallback } from "react";
 import { GET_LANDMARK_BY_ID_QUERY } from "../queries/getLandmarkById";
 
 export const useGetLandmarkById = () => {
-    const [variables, { data, loading, error }] = useLazyQuery<any>(GET_LANDMARK_BY_ID_QUERY);
+    const [variables, { data, loading, error }] = useLazyQuery<any>(GET_LANDMARK_BY_ID_QUERY, {
+        fetchPolicy: "network-only",
+    });
 
     const handleGetLandmarkById = useCallback(
         (id: string) => {

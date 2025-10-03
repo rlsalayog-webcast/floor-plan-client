@@ -26,7 +26,9 @@ interface DrawerGroup {
 
 interface DrawerContextType {
     modal: DrawerGroup & { selectedTool: DataState; selectedArea: DataState };
-    drawer: DrawerGroup;
+    drawer: DrawerGroup & {
+        refetch: { value: boolean; setValue: React.Dispatch<React.SetStateAction<boolean>> };
+    };
 }
 
 const emptyDrawerGroup: DrawerGroup = {
@@ -68,7 +70,13 @@ const initialState: DrawerContextType = {
             setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
         },
     },
-    drawer: emptyDrawerGroup,
+    drawer: {
+        ...emptyDrawerGroup,
+        refetch: {
+            value: false,
+            setValue: (() => {}) as React.Dispatch<React.SetStateAction<boolean>>,
+        },
+    },
 };
 
 const DrawerVisibilityContext = createContext<DrawerContextType>(initialState);

@@ -105,7 +105,7 @@ const FloorPlanModal = () => {
             }
         };
         fetch();
-    }, [modal.id.value, modal.view.visible]);
+    }, [modal.id.value, modal.view.visible, drawer.refetch.value]);
 
     const onChangeSelect = useCallback(
         async (val: any) => {

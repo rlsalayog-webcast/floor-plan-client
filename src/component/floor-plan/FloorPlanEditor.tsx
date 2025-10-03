@@ -208,7 +208,7 @@ const FloorPlanEditor = ({
             >
                 <Layer>
                     <GridLinesBg width={1000} height={520} cellSize={25} />
-                    {modal.dataSet.value?.areas.map((element: IFloorPlanArea) => {
+                    {modal.dataSet.value?.areas?.map((element: IFloorPlanArea) => {
                         const isSelected = modal.selectedArea.value?.id === element.id;
                         return (
                             <Group

@@ -17,6 +17,7 @@ const Home = () => {
     const { data, loading, error } = useGetAllLandmark();
     const [selectedTool, setSelectedTool] = useState<ISelect>("select");
     const [selectedArea, setSelectedArea] = useState(undefined);
+    const [refetch, setRefetch] = useState(false);
 
     return (
         <>
@@ -30,7 +31,7 @@ const Home = () => {
                             setValue: setSelectedArea,
                         },
                     },
-                    drawer,
+                    drawer: { ...drawer, refetch: { value: refetch, setValue: setRefetch } },
                 }}
             >
                 <div className="min-h-screen">
