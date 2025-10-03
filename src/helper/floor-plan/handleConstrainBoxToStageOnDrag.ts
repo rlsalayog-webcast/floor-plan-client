@@ -1,17 +1,25 @@
 import type Konva from "konva";
-import type { IFloorPlanArea } from "../types/FloorPlan";
+import type { IFloorPlanArea } from "../../types/FloorPlan";
 
-export function getDragBoundFunc(
+/**
+ * Keeps a draggable element (box) inside the stage boundaries while dragging.
+ *
+ * @param pos          The proposed position of the element ({ x, y }).
+ * @param element      The element being dragged, containing width and height.
+ * @param stage        The Konva.Stage instance to constrain the element within.
+ * @param strokeWidth  Optional stroke width of the element (default is 1) to account for visual boundaries.
+ * @returns            The adjusted position ({ x, y }) that keeps the element inside the stage.
+ */
+
+export const handleConstrainBoxToStageOnDrag = (
     pos: { x: number; y: number },
     element: IFloorPlanArea,
-    stage: Konva.Stage
-) {
+    stage: Konva.Stage,
+    strokeWidth: number = 1
+) => {
     const scale = stage.scaleX();
     const stageWidth = stage.width() / scale;
     const stageHeight = stage.height() / scale;
-
-    // Fallback strokeWidth to 0 if not defined
-    const strokeWidth = 1;
     const halfStroke = strokeWidth / 2;
 
     // Determine dimensions and offset dynamically
@@ -33,4 +41,4 @@ export function getDragBoundFunc(
 
     // Return scaled back position
     return { x: newX * scale, y: newY * scale };
-}
+};

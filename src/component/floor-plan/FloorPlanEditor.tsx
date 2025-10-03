@@ -1,10 +1,11 @@
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import type { Box } from "konva/lib/shapes/Transformer";
 import { useContext, useEffect, useRef } from "react";
 import { Group, Layer, Rect, Stage, Text, Transformer } from "react-konva";
-import { TEMP_ID_FORMAT } from "../../constant/tempIdFormat";
-import { getDragBoundFunc } from "../../helper/floor-plan";
+import { TEMP_ID_FORMAT } from "../../constant";
+import { handleConstrainBoxToStageOnDrag } from "../../helper/floor-plan/handleConstrainBoxToStageOnDrag";
+import { handleKeepResizeWithinStage } from "../../helper/floor-plan/handleKeepResizeWithinStage";
+import { handleUpdateElementAfterTransform } from "../../helper/floor-plan/handleUpdateElementAfterTransform";
 import useResponsiveStageSize from "../../hook/useResponsiveStageSize";
 import DrawerVisibilityContext from "../../store/context/DrawerVisibilityContext";
 import type { IFloor, IFloorPlanArea } from "../../types/FloorPlan";
@@ -17,13 +18,14 @@ const FloorPlanEditor = ({
     handleAreaClick: (area: IFloorPlanArea) => void;
     handleStageOpenAreaClick: () => void;
 }) => {
+    const STROKE_WIDTH = 1; // border width for elements
     const { modal } = useContext(DrawerVisibilityContext);
     const { stageSize, containerRef } = useResponsiveStageSize();
     const stageRef = useRef<Konva.Stage>(null);
     const elementRefs = useRef(new Map());
     const transformerRef = useRef<Konva.Transformer>(null);
 
-    // Used for transformer / resizing
+    // Update transformer when selected area changes for resizing
     useEffect(() => {
         if (modal.selectedArea.value && transformerRef.current) {
             const stage = stageRef.current;
@@ -39,7 +41,7 @@ const FloorPlanEditor = ({
         }
     }, [modal.selectedArea.value]);
 
-    const bringToFront = (elementId: string) => {
+    const moveAreaToFront = (elementId: string) => {
         modal.dataSet.setValue((prev: IFloor) => {
             if (!prev.areas) return prev;
 
@@ -60,7 +62,7 @@ const FloorPlanEditor = ({
     };
 
     /**
-     * To add new shapes
+     * To add new areas on stage click
      */
     const handleStageClick = (e: Konva.KonvaEventObject<MouseEvent>) => {
         const position = e.target.getStage()?.getPointerPosition();
@@ -94,7 +96,7 @@ const FloorPlanEditor = ({
 
     const handleElementClick = (element: IFloorPlanArea) => {
         modal.selectedArea.setValue(element);
-        bringToFront(element.id);
+        moveAreaToFront(element.id);
         handleAreaClick(element);
     };
 
@@ -127,68 +129,6 @@ const FloorPlanEditor = ({
         if (stage) {
             stage.container().style.cursor = "default";
         }
-    };
-
-    // NEW: Handle transform end to update element dimensions
-    const handleTransformEnd = () => {
-        if (!modal.selectedArea.value || !transformerRef.current) return;
-
-        const node = transformerRef.current.nodes()[0];
-        if (!node) return;
-
-        const scaleX = node.scaleX();
-        const scaleY = node.scaleY();
-
-        // Reset scale to 1 and update actual dimensions
-        node.scaleX(1);
-        node.scaleY(1);
-
-        let updatedElement = { ...modal.selectedArea.value };
-
-        updatedElement = {
-            ...modal.selectedArea.value,
-            x: node.x(),
-            y: node.y(),
-            width: Math.max(20, (modal.selectedArea.value.width || 100) * scaleX),
-            height: Math.max(20, (modal.selectedArea.value.height || 80) * scaleY),
-        };
-
-        // Update the element in the dataset
-        const updatedElements = modal.dataSet.value.areas?.map((el: IFloorPlanArea) =>
-            el.id === modal.selectedArea.value.id ? updatedElement : el
-        );
-        modal.dataSet.setValue((prev: IFloor) => ({ ...prev, areas: updatedElements }));
-        modal.selectedArea.setValue(updatedElement);
-    };
-
-    const boundBoxFunc = (oldBox: Box, newBox: Box) => {
-        // Prevent resizing below minimum sizes
-        if (newBox.width < 20 || newBox.height < 20) {
-            return oldBox;
-        }
-
-        // Ensure the shape stays within stage boundaries
-        if (newBox.x < 0) {
-            newBox.width += newBox.x;
-            newBox.x = 0;
-        }
-        if (newBox.y < 0) {
-            newBox.height += newBox.y;
-            newBox.y = 0;
-        }
-        if (newBox.x + newBox.width > stageSize.width) {
-            newBox.width = stageSize.width - newBox.x;
-        }
-        if (newBox.y + newBox.height > stageSize.height) {
-            newBox.height = stageSize.height - newBox.y;
-        }
-
-        // Final size check after boundary adjustments
-        if (newBox.width < 20 || newBox.height < 20) {
-            return oldBox;
-        }
-
-        return newBox;
     };
 
     return (
@@ -235,7 +175,12 @@ const FloorPlanEditor = ({
                                         return pos;
                                     }
 
-                                    return getDragBoundFunc(pos, element, stage);
+                                    return handleConstrainBoxToStageOnDrag(
+                                        pos,
+                                        element,
+                                        stage,
+                                        STROKE_WIDTH
+                                    );
                                 }}
                                 onMouseOver={handleMouseOver}
                                 onMouseOut={handleMouseOut}
@@ -246,7 +191,7 @@ const FloorPlanEditor = ({
                                     fill={element.backgroundColor}
                                     opacity={isSelected ? 0.7 : 1}
                                     stroke={"black"}
-                                    strokeWidth={1}
+                                    strokeWidth={STROKE_WIDTH}
                                     strokeScaleEnabled={false}
                                 />
                                 <Text
@@ -265,8 +210,33 @@ const FloorPlanEditor = ({
                     {modal.selectedArea.value && modal.edit.visible && (
                         <Transformer
                             ref={transformerRef}
-                            boundBoxFunc={boundBoxFunc}
-                            onTransformEnd={handleTransformEnd}
+                            boundBoxFunc={(oldBox, newBox) =>
+                                handleKeepResizeWithinStage(oldBox, newBox, {
+                                    width: stageSize.width,
+                                    height: stageSize.height,
+                                })
+                            }
+                            onTransformEnd={() => {
+                                if (!modal.selectedArea.value) {
+                                    return;
+                                }
+
+                                const updatedElement = handleUpdateElementAfterTransform({
+                                    transformerRef,
+                                    selectedElement: modal.selectedArea.value,
+                                });
+
+                                if (updatedElement) {
+                                    modal.dataSet.setValue((prev: IFloor) => ({
+                                        ...prev,
+                                        areas: prev.areas?.map((el) =>
+                                            el.id === updatedElement.id ? updatedElement : el
+                                        ),
+                                    }));
+
+                                    modal.selectedArea.setValue(updatedElement);
+                                }
+                            }}
                         />
                     )}
                 </Layer>
