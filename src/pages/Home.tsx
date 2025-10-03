@@ -63,7 +63,7 @@ const Home = () => {
                         style={{ height: "100vh" }}
                         mapId={import.meta.env.VITE_MAP_ID || ""}
                         defaultZoom={10}
-                        center={MANILA_POSITION}
+                        defaultCenter={MANILA_POSITION}
                         gestureHandling={"greedy"}
                         disableDefaultUI
                     >

@@ -45,6 +45,7 @@ const FloorPlanModal = () => {
     const { handleDeleteFloor } = useDeleteFloor();
     const { modal, drawer } = useContext(DrawerVisibilityContext);
     const [floorOptions, setFloorOptions] = useState<FloorOption[]>([]);
+    const loading = loadingGetLandmarkById || loadingGetFloorByLevelId;
 
     const items: MenuProps["items"] = [
         {
@@ -163,9 +164,32 @@ const FloorPlanModal = () => {
         fetch();
     }, [modal.id.value, modal.view.visible, drawer.refetch.value]);
 
+    const onChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+        name: string,
+        modal: any
+    ) => {
+        modal.dataSet.setValue((prev: any) => ({
+            ...prev,
+            areas: prev.areas.map((area: any) =>
+                area.id === modal.selectedArea.value.id
+                    ? {
+                          ...area,
+                          details: {
+                              ...area.details,
+                              [name]: e.target.value,
+                          },
+                      }
+                    : area
+            ),
+        }));
+    };
+
     const onChangeSelect = useCallback(
         async (val: any) => {
-            if (!val) return;
+            if (!val) {
+                return;
+            }
 
             modal.edit.setVisible(false);
             modal.selectedArea.setValue(null);
@@ -188,7 +212,7 @@ const FloorPlanModal = () => {
         [modal.id.value]
     );
 
-    const resetStates = () => {
+    const handleResetStates = () => {
         modal.view.setVisible(false);
         modal.edit.setVisible(false);
         modal.id.setValue(null);
@@ -199,9 +223,9 @@ const FloorPlanModal = () => {
         modal.form.resetFields();
     };
 
-    const onModalClose = () => {
+    const onClose = () => {
         if (!modal.selectedFloorLevelId.value || !modal.edit.visible) {
-            resetStates();
+            handleResetStates();
             return;
         }
 
@@ -214,34 +238,92 @@ const FloorPlanModal = () => {
                 </>
             ),
             onOk: () => {
-                resetStates();
+                handleResetStates();
             },
             okText: "YES",
         });
     };
 
-    const onChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-        name: string,
-        modal: any
-    ) => {
-        modal.dataSet.setValue((prev: any) => ({
-            ...prev,
-            areas: prev.areas.map((area: any) =>
-                area.id === modal.selectedArea.value.id
-                    ? {
-                          ...area,
-                          details: {
-                              ...area.details,
-                              [name]: e.target.value,
-                          },
-                      }
-                    : area
-            ),
-        }));
+    const handleDelete = () => {
+        if (modal.edit.visible) {
+            modal.form.resetFields();
+            modal.selectedArea.setValue(null);
+
+            modal.dataSet.setValue((prev: IFloor) => ({
+                ...prev,
+                areas: prev.areas?.filter(
+                    (el: IFloorPlanArea) => el.id !== modal.selectedArea.value.id
+                ),
+            }));
+        }
     };
 
-    const loading = loadingGetLandmarkById || loadingGetFloorByLevelId;
+    const onCancel = () => {
+        modalAntd.confirm({
+            title: "Confirm Discard",
+            content: (
+                <>
+                    <p>Are you sure you want to discard changes?</p>
+                    <p>This action cannot be undone.</p>
+                </>
+            ),
+            onOk: () => {
+                modal.dataSet.setValue(modal.originalDataSet.value);
+                modal.edit.setVisible(false);
+                modal.selectedTool.setValue("select");
+                modal.form.resetFields();
+            },
+            okText: "YES",
+        });
+    };
+
+    const onSave = async () => {
+        if (!modal.id.value) {
+            return;
+        }
+
+        const cleanedAreas = modal.dataSet.value.areas.map((area: any) => {
+            const isTempId = typeof area.id === "string" && area.id.startsWith(TEMP_ID_FORMAT);
+
+            return {
+                id: isTempId ? undefined : area.id, // remove if temp
+                x: area.x,
+                y: area.y,
+                width: area.width,
+                height: area.height,
+                backgroundColor: area.backgroundColor,
+                textColor: area.textColor,
+                details: {
+                    name: area.details.name,
+                    description: area.details.description,
+                },
+            };
+        });
+
+        const resp = await handleUpdateFloorAreas({
+            landmarkId: modal.id.value,
+            floorId: modal.dataSet.value.id,
+            areas: cleanedAreas,
+        });
+
+        if (!resp) {
+            messageApi.open({
+                type: "error",
+                content: "Failed to update Floor Plan!",
+            });
+            return;
+        }
+
+        messageApi.open({
+            type: "success",
+            content: "Floor plan update successfully!",
+        });
+
+        drawer.refetch.setValue((prev) => !prev);
+        modal.originalDataSet.setValue(modal.dataSet.value);
+        modal.edit.setVisible(false);
+        modal.selectedTool.setValue("select");
+    };
 
     return (
         <>
@@ -252,7 +334,7 @@ const FloorPlanModal = () => {
                 width={1500}
                 zIndex={500}
                 open={modal.view.visible}
-                onCancel={() => onModalClose()}
+                onCancel={onClose}
                 footer={null}
                 destroyOnHidden // force re-mount to reset the states
             >
@@ -346,21 +428,7 @@ const FloorPlanModal = () => {
                                                     ? ["delete"]
                                                     : []
                                             }
-                                            handleDelete={() => {
-                                                if (modal.edit.visible) {
-                                                    modal.form.resetFields();
-                                                    modal.selectedArea.setValue(null);
-
-                                                    modal.dataSet.setValue((prev: IFloor) => ({
-                                                        ...prev,
-                                                        areas: prev.areas?.filter(
-                                                            (el: IFloorPlanArea) =>
-                                                                el.id !==
-                                                                modal.selectedArea.value.id
-                                                        ),
-                                                    }));
-                                                }
-                                            }}
+                                            handleDelete={handleDelete}
                                         />
                                     }
                                 >
@@ -393,90 +461,13 @@ const FloorPlanModal = () => {
                                 </Card>
                                 {modal.edit.visible && modal.selectedFloorLevelId.value && (
                                     <div className="flex justify-end gap-x-4">
-                                        <Button
-                                            onClick={() => {
-                                                modalAntd.confirm({
-                                                    title: "Confirm Discard",
-                                                    content: (
-                                                        <>
-                                                            <p>
-                                                                Are you sure you want to discard
-                                                                changes?
-                                                            </p>
-                                                            <p>This action cannot be undone.</p>
-                                                        </>
-                                                    ),
-                                                    onOk: () => {
-                                                        modal.dataSet.setValue(
-                                                            modal.originalDataSet.value
-                                                        );
-                                                        modal.edit.setVisible(false);
-                                                        modal.selectedTool.setValue("select");
-                                                        modal.form.resetFields();
-                                                    },
-                                                    okText: "YES",
-                                                });
-                                            }}
-                                        >
-                                            Cancel
-                                        </Button>
+                                        <Button onClick={onCancel}>Cancel</Button>
                                         <Button
                                             type="primary"
-                                            onClick={async () => {
-                                                if (!modal.id.value) {
-                                                    return;
-                                                }
-
-                                                const cleanedAreas = modal.dataSet.value.areas.map(
-                                                    (area: any) => {
-                                                        const isTempId =
-                                                            typeof area.id === "string" &&
-                                                            area.id.startsWith(TEMP_ID_FORMAT);
-
-                                                        return {
-                                                            id: isTempId ? undefined : area.id, // remove if temp
-                                                            x: area.x,
-                                                            y: area.y,
-                                                            width: area.width,
-                                                            height: area.height,
-                                                            backgroundColor: area.backgroundColor,
-                                                            textColor: area.textColor,
-                                                            details: {
-                                                                name: area.details.name,
-                                                                description:
-                                                                    area.details.description,
-                                                            },
-                                                        };
-                                                    }
-                                                );
-
-                                                const resp = await handleUpdateFloorAreas({
-                                                    landmarkId: modal.id.value,
-                                                    floorId: modal.dataSet.value.id,
-                                                    areas: cleanedAreas,
-                                                });
-
-                                                if (!resp) {
-                                                    messageApi.open({
-                                                        type: "error",
-                                                        content: "Failed to update Floor Plan!",
-                                                    });
-                                                    return;
-                                                }
-
-                                                messageApi.open({
-                                                    type: "success",
-                                                    content: "Floor plan update successfully!",
-                                                });
-
-                                                drawer.refetch.setValue((prev) => !prev);
-                                                modal.originalDataSet.setValue(modal.dataSet.value);
-                                                modal.edit.setVisible(false);
-                                                modal.selectedTool.setValue("select");
-                                            }}
+                                            onClick={onSave}
                                             loading={loadingUpdateFloorAreas}
                                         >
-                                            Save Floor Plan
+                                            Save
                                         </Button>
                                     </div>
                                 )}
