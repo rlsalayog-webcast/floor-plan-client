@@ -1,4 +1,10 @@
-import { CheckCircleFilled, DownOutlined } from "@ant-design/icons";
+import {
+    CheckCircleFilled,
+    DeleteOutlined,
+    DownOutlined,
+    EditOutlined,
+    PlusOutlined,
+} from "@ant-design/icons";
 import {
     Button,
     Card,
@@ -46,21 +52,23 @@ const FloorPlanModal = () => {
 
     const items: MenuProps["items"] = [
         {
-            key: "1",
-            label: "Create",
+            key: "add",
+            label: "Add",
             onClick: () => {
                 drawer.add.setVisible(true);
             },
+            icon: <PlusOutlined className="!text-blue-500" />,
         },
         {
-            key: "2",
+            key: "edit",
             label: "Edit",
             onClick: () => {
                 drawer.edit.setVisible(true);
             },
+            icon: <EditOutlined className="!text-blue-500" />,
         },
         {
-            key: "3",
+            key: "delete",
             label: "Delete",
             onClick: () => {
                 modalAntd.confirm({
@@ -106,6 +114,7 @@ const FloorPlanModal = () => {
                     okType: "danger",
                 });
             },
+            icon: <DeleteOutlined className="!text-red-500" />,
         },
     ];
 
@@ -173,15 +182,19 @@ const FloorPlanModal = () => {
         [modal.id.value]
     );
 
+    const resetStates = () => {
+        modal.view.setVisible(false);
+        modal.edit.setVisible(false);
+        modal.id.setValue(null);
+        modal.selectedArea.setValue(null);
+        modal.selectedTool.setValue("select");
+        modal.dataSet.setValue(null);
+        modal.form.resetFields();
+    };
+
     const onModalClose = () => {
-        if (!modal.selectedFloorLevelId.value) {
-            modal.view.setVisible(false);
-            modal.edit.setVisible(false);
-            modal.id.setValue(null);
-            modal.selectedArea.setValue(null);
-            modal.selectedTool.setValue("select");
-            modal.dataSet.setValue(null);
-            modal.form.resetFields();
+        if (!modal.selectedFloorLevelId.value || !modal.edit.visible) {
+            resetStates();
             return;
         }
 
@@ -194,13 +207,7 @@ const FloorPlanModal = () => {
                 </>
             ),
             onOk: () => {
-                modal.view.setVisible(false);
-                modal.edit.setVisible(false);
-                modal.id.setValue(null);
-                modal.selectedArea.setValue(null);
-                modal.selectedTool.setValue("select");
-                modal.dataSet.setValue(null);
-                modal.form.resetFields();
+                resetStates();
             },
             okText: "YES",
         });
@@ -284,7 +291,14 @@ const FloorPlanModal = () => {
                                         onChange={onChangeSelect}
                                         options={floorOptions}
                                     />
-                                    <Dropdown menu={{ items }} placement="bottom">
+                                    <Dropdown
+                                        menu={{
+                                            items: modal.selectedFloorLevelId.value
+                                                ? items
+                                                : items.filter((item) => item?.key === "add"),
+                                        }}
+                                        placement="bottom"
+                                    >
                                         <Button type="primary">
                                             Floor Actions
                                             <DownOutlined />
@@ -372,24 +386,14 @@ const FloorPlanModal = () => {
                                 </Card>
                                 {modal.edit.visible && modal.selectedFloorLevelId.value && (
                                     <div className="flex justify-end gap-x-4">
-                                        {/* <Button
-                                            onClick={() => {
-                                                modal.edit.setVisible(false);
-                                                modal.view.setVisible(false);
-                                                modal.id.setValue(null);
-                                                modal.selectedArea.setValue(null);
-                                                modal.dataSet.setValue(null);
-                                                form.resetFields();
-                                            }}
-                                        >
-                                            Cancel
-                                        </Button> */}
+                                        <Button onClick={() => {}}>Cancel</Button>
                                         <Button
                                             type="primary"
                                             onClick={async () => {
                                                 if (!modal.id.value) {
                                                     return;
                                                 }
+
                                                 const cleanedAreas = modal.dataSet.value.areas.map(
                                                     (area: any) => {
                                                         const isTempId =
@@ -433,12 +437,7 @@ const FloorPlanModal = () => {
                                                 });
 
                                                 modal.edit.setVisible(false);
-                                                modal.view.setVisible(false);
-                                                modal.id.setValue(null);
-                                                modal.selectedArea.setValue(null);
                                                 modal.selectedTool.setValue("select");
-                                                modal.dataSet.setValue(null);
-                                                modal.form.resetFields();
                                             }}
                                             loading={loadingUpdateFloorAreas}
                                         >
