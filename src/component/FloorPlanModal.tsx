@@ -10,7 +10,6 @@ import {
     Radio,
     Select,
     Spin,
-    type FormProps,
     type MenuProps,
 } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -43,7 +42,6 @@ const FloorPlanModal = () => {
     const { handleUpdateFloorAreas, loading: loadingUpdateFloorAreas } = useUpdateFloorAreas();
     const { handleDeleteFloor } = useDeleteFloor();
     const { modal, drawer } = useContext(DrawerVisibilityContext);
-    const [form] = Form.useForm();
     const [floorOptions, setFloorOptions] = useState<FloorOption[]>([]);
 
     const items: MenuProps["items"] = [
@@ -94,6 +92,8 @@ const FloorPlanModal = () => {
                                 content: "Floor was deleted successfully!",
                             });
                             drawer.refetch.setValue((prev) => !prev);
+                            modal.edit.setVisible(false);
+                            modal.form.resetFields();
                             return;
                         } catch (error) {
                             messageApi.open({
@@ -155,7 +155,7 @@ const FloorPlanModal = () => {
 
             modal.edit.setVisible(false);
             modal.selectedArea.setValue(null);
-            form.resetFields();
+            modal.form.resetFields();
 
             modal.selectedFloorLevelId.setValue(val);
 
@@ -181,7 +181,7 @@ const FloorPlanModal = () => {
             modal.selectedArea.setValue(null);
             modal.selectedTool.setValue("select");
             modal.dataSet.setValue(null);
-            form.resetFields();
+            modal.form.resetFields();
             return;
         }
 
@@ -200,35 +200,32 @@ const FloorPlanModal = () => {
                 modal.selectedArea.setValue(null);
                 modal.selectedTool.setValue("select");
                 modal.dataSet.setValue(null);
-                form.resetFields();
+                modal.form.resetFields();
             },
             okText: "YES",
         });
     };
 
-    const onFinish: FormProps<FieldType>["onFinish"] = useCallback(
-        async (values: FieldType) => {
-            modal.dataSet.setValue((prev: any) => ({
-                ...prev,
-                areas: prev.areas.map((area: any) =>
-                    area.id === modal.selectedArea.value.id
-                        ? {
-                              ...area,
-                              details: {
-                                  ...area.details,
-                                  ...values,
-                              },
-                          }
-                        : area
-                ),
-            }));
-
-            modal.selectedArea.setValue(null);
-            modal.selectedTool.setValue("select");
-            form.resetFields();
-        },
-        [modal.selectedArea.value]
-    );
+    const onChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+        name: string,
+        modal: any
+    ) => {
+        modal.dataSet.setValue((prev: any) => ({
+            ...prev,
+            areas: prev.areas.map((area: any) =>
+                area.id === modal.selectedArea.value.id
+                    ? {
+                          ...area,
+                          details: {
+                              ...area.details,
+                              [name]: e.target.value,
+                          },
+                      }
+                    : area
+            ),
+        }));
+    };
 
     const loading = loadingGetLandmarkById || loadingGetFloorByLevelId;
 
@@ -266,14 +263,14 @@ const FloorPlanModal = () => {
                             </p>
                             <FloorPlanEditor
                                 handleAreaClick={({ details }) => {
-                                    form.setFieldsValue({
+                                    modal.form.setFieldsValue({
                                         name: details.name,
                                         description: details.description,
                                     });
                                 }}
                                 handleStageOpenAreaClick={() => {
                                     modal.selectedArea.setValue(null);
-                                    form.resetFields();
+                                    modal.form.resetFields();
                                 }}
                             />
                         </div>
@@ -330,7 +327,7 @@ const FloorPlanModal = () => {
                                             }
                                             handleDelete={() => {
                                                 if (modal.edit.visible) {
-                                                    form.resetFields();
+                                                    modal.form.resetFields();
                                                     modal.selectedArea.setValue(null);
 
                                                     modal.dataSet.setValue((prev: IFloor) => ({
@@ -346,25 +343,12 @@ const FloorPlanModal = () => {
                                         />
                                     }
                                 >
-                                    <Form
-                                        form={form}
-                                        layout="vertical"
-                                        onFinish={onFinish}
-                                        autoComplete="off"
-                                    >
-                                        <Form.Item
-                                            label="Name"
-                                            name="name"
-                                            rules={[
-                                                {
-                                                    required:
-                                                        modal.edit.visible &&
-                                                        modal.selectedArea.value,
-                                                    message: "Name is required",
-                                                },
-                                            ]}
-                                        >
+                                    <Form form={modal.form} layout="vertical" autoComplete="off">
+                                        <Form.Item label="Name" name="name">
                                             <Input
+                                                onChange={(e) => {
+                                                    onChange(e, "name", modal);
+                                                }}
                                                 readOnly={
                                                     !modal.edit.visible || !modal.selectedArea.value
                                                 }
@@ -372,20 +356,12 @@ const FloorPlanModal = () => {
                                             />
                                         </Form.Item>
 
-                                        <Form.Item
-                                            label="Description"
-                                            name="description"
-                                            rules={[
-                                                {
-                                                    required:
-                                                        modal.edit.visible &&
-                                                        modal.selectedArea.value,
-                                                    message: "Description is required",
-                                                },
-                                            ]}
-                                        >
+                                        <Form.Item label="Description" name="description">
                                             <TextArea
                                                 rows={3}
+                                                onChange={(e) => {
+                                                    onChange(e, "description", modal);
+                                                }}
                                                 readOnly={
                                                     !modal.edit.visible || !modal.selectedArea.value
                                                 }
@@ -393,31 +369,10 @@ const FloorPlanModal = () => {
                                             />
                                         </Form.Item>
                                     </Form>
-                                    {modal.edit.visible && modal.selectedArea.value && (
-                                        <div className="flex gap-4 justify-end">
-                                            <Button
-                                                danger
-                                                onClick={() => {
-                                                    modal.selectedArea.setValue(null);
-                                                    modal.selectedTool.setValue("select");
-                                                    form.resetFields();
-                                                }}
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                onClick={() => {
-                                                    form.submit();
-                                                }}
-                                            >
-                                                Save
-                                            </Button>
-                                        </div>
-                                    )}
                                 </Card>
-                                {modal.selectedFloorLevelId.value && (
+                                {modal.edit.visible && modal.selectedFloorLevelId.value && (
                                     <div className="flex justify-end gap-x-4">
-                                        <Button
+                                        {/* <Button
                                             onClick={() => {
                                                 modal.edit.setVisible(false);
                                                 modal.view.setVisible(false);
@@ -428,7 +383,7 @@ const FloorPlanModal = () => {
                                             }}
                                         >
                                             Cancel
-                                        </Button>
+                                        </Button> */}
                                         <Button
                                             type="primary"
                                             onClick={async () => {
@@ -472,12 +427,18 @@ const FloorPlanModal = () => {
                                                     return;
                                                 }
 
+                                                messageApi.open({
+                                                    type: "success",
+                                                    content: "Floor plan update successfully!",
+                                                });
+
                                                 modal.edit.setVisible(false);
                                                 modal.view.setVisible(false);
                                                 modal.id.setValue(null);
                                                 modal.selectedArea.setValue(null);
+                                                modal.selectedTool.setValue("select");
                                                 modal.dataSet.setValue(null);
-                                                form.resetFields();
+                                                modal.form.resetFields();
                                             }}
                                             loading={loadingUpdateFloorAreas}
                                         >

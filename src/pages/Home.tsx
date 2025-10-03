@@ -1,5 +1,5 @@
 import { Map } from "@vis.gl/react-google-maps";
-import { Alert, Button, Spin } from "antd";
+import { Alert, Button, Form, Spin } from "antd";
 import { useState } from "react";
 import { useGetAllLandmark } from "../api/hooks/useGetAllLandmark";
 import FloorDrawer from "../component/FloorDrawer";
@@ -19,6 +19,7 @@ const Home = () => {
     const [selectedArea, setSelectedArea] = useState(undefined);
     const [selectedFloorLevelId, setSelectedFloorLevelId] = useState<string | undefined>(undefined);
     const [refetch, setRefetch] = useState(false);
+    const [form] = Form.useForm();
 
     return (
         <>
@@ -35,6 +36,7 @@ const Home = () => {
                             value: selectedFloorLevelId,
                             setValue: setSelectedFloorLevelId,
                         },
+                        form,
                     },
                     drawer: { ...drawer, refetch: { value: refetch, setValue: setRefetch } },
                 }}

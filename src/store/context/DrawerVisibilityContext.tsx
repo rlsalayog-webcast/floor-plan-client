@@ -1,3 +1,4 @@
+import type { FormInstance } from "antd";
 import { createContext } from "react";
 
 interface DrawerState {
@@ -32,6 +33,7 @@ interface DrawerContextType {
             value: string | undefined;
             setValue: React.Dispatch<React.SetStateAction<string | undefined>>;
         };
+        form: FormInstance;
     };
     drawer: DrawerGroup & {
         refetch: { value: boolean; setValue: React.Dispatch<React.SetStateAction<boolean>> };
@@ -80,6 +82,7 @@ const initialState: DrawerContextType = {
             value: undefined,
             setValue: (() => {}) as React.Dispatch<React.SetStateAction<string | undefined>>,
         },
+        form: {} as FormInstance,
     },
     drawer: {
         ...emptyDrawerGroup,
