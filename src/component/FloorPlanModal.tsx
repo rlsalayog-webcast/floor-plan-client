@@ -30,11 +30,6 @@ import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
 
 const { TextArea } = Input;
 
-interface FieldType {
-    name: string;
-    description: string;
-}
-
 interface FloorOption {
     value: string;
     label: string;
@@ -101,6 +96,7 @@ const FloorPlanModal = () => {
                             });
                             drawer.refetch.setValue((prev) => !prev);
                             modal.edit.setVisible(false);
+                            modal.selectedTool.setValue("select");
                             modal.form.resetFields();
                             return;
                         } catch (error) {
@@ -123,29 +119,37 @@ const FloorPlanModal = () => {
             if (modal.id.value && modal.view.visible) {
                 try {
                     const resp = await handleGetLandmarkById(modal.id.value);
-                    if (resp) {
-                        const options = resp.data.getLandmarkById.floorPlans.map(
-                            ({ id, level }: any) => ({
-                                value: id,
-                                label: level,
-                            })
-                        );
-                        setFloorOptions(options ?? []);
-                        if (options.length > 0) {
-                            modal.selectedFloorLevelId.setValue(options[0].value);
 
-                            const resp = await handleGetFloorByLevelId({
-                                landmarkId: modal.id.value,
-                                levelId: options[0].value,
-                            });
+                    if (!resp) {
+                        throw new Error("Failed to get Landmark!");
+                    }
 
-                            if (resp) {
-                                modal.dataSet.setValue(resp.data.getFloorByLevelId);
-                            }
-                        } else {
-                            modal.selectedFloorLevelId.setValue(undefined);
-                            modal.dataSet.setValue(null);
+                    const options = resp.data.getLandmarkById.floorPlans.map(
+                        ({ id, level }: any) => ({
+                            value: id,
+                            label: level,
+                        })
+                    );
+
+                    setFloorOptions(options ?? []);
+
+                    if (options.length > 0) {
+                        modal.selectedFloorLevelId.setValue(options[0].value);
+
+                        const resp = await handleGetFloorByLevelId({
+                            landmarkId: modal.id.value,
+                            levelId: options[0].value,
+                        });
+
+                        if (!resp) {
+                            throw new Error("Failed to get Floor!");
                         }
+
+                        modal.dataSet.setValue(resp.data.getFloorByLevelId);
+                        modal.originalDataSet.setValue(resp.data.getFloorByLevelId);
+                    } else {
+                        modal.selectedFloorLevelId.setValue(undefined);
+                        modal.dataSet.setValue(null);
                     }
                 } catch (err) {
                     messageApi.open({
@@ -176,6 +180,7 @@ const FloorPlanModal = () => {
 
                 if (resp) {
                     modal.dataSet.setValue(resp.data.getFloorByLevelId);
+                    modal.originalDataSet.setValue(resp.data.getFloorByLevelId);
                 }
             }
         },
@@ -189,6 +194,7 @@ const FloorPlanModal = () => {
         modal.selectedArea.setValue(null);
         modal.selectedTool.setValue("select");
         modal.dataSet.setValue(null);
+        modal.originalDataSet.setValue(null);
         modal.form.resetFields();
     };
 
@@ -386,7 +392,33 @@ const FloorPlanModal = () => {
                                 </Card>
                                 {modal.edit.visible && modal.selectedFloorLevelId.value && (
                                     <div className="flex justify-end gap-x-4">
-                                        <Button onClick={() => {}}>Cancel</Button>
+                                        <Button
+                                            onClick={() => {
+                                                modalAntd.confirm({
+                                                    title: "Confirm Discard",
+                                                    content: (
+                                                        <>
+                                                            <p>
+                                                                Are you sure you want to discard
+                                                                changes?
+                                                            </p>
+                                                            <p>This action cannot be undone.</p>
+                                                        </>
+                                                    ),
+                                                    onOk: () => {
+                                                        modal.dataSet.setValue(
+                                                            modal.originalDataSet.value
+                                                        );
+                                                        modal.edit.setVisible(false);
+                                                        modal.selectedTool.setValue("select");
+                                                        modal.form.resetFields();
+                                                    },
+                                                    okText: "YES",
+                                                });
+                                            }}
+                                        >
+                                            Cancel
+                                        </Button>
                                         <Button
                                             type="primary"
                                             onClick={async () => {
@@ -436,6 +468,8 @@ const FloorPlanModal = () => {
                                                     content: "Floor plan update successfully!",
                                                 });
 
+                                                drawer.refetch.setValue((prev) => !prev);
+                                                modal.originalDataSet.setValue(modal.dataSet.value);
                                                 modal.edit.setVisible(false);
                                                 modal.selectedTool.setValue("select");
                                             }}

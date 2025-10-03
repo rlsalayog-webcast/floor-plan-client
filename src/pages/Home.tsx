@@ -20,6 +20,7 @@ const Home = () => {
     const [selectedFloorLevelId, setSelectedFloorLevelId] = useState<string | undefined>(undefined);
     const [refetch, setRefetch] = useState(false);
     const [form] = Form.useForm();
+    const [originalDataSet, setOriginalDataSet] = useState<any>(null);
 
     return (
         <>
@@ -27,6 +28,7 @@ const Home = () => {
                 value={{
                     modal: {
                         ...modal,
+                        originalDataSet: { value: originalDataSet, setValue: setOriginalDataSet },
                         selectedTool: { value: selectedTool, setValue: setSelectedTool },
                         selectedArea: {
                             value: selectedArea,

@@ -27,6 +27,7 @@ interface DrawerGroup {
 
 interface DrawerContextType {
     modal: DrawerGroup & {
+        originalDataSet: DataState;
         selectedTool: DataState;
         selectedArea: DataState;
         selectedFloorLevelId: {
@@ -70,6 +71,10 @@ const emptyDrawerGroup: DrawerGroup = {
 const initialState: DrawerContextType = {
     modal: {
         ...emptyDrawerGroup,
+        originalDataSet: {
+            value: undefined,
+            setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
+        },
         selectedTool: {
             value: undefined,
             setValue: (() => {}) as React.Dispatch<React.SetStateAction<any>>,
