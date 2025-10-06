@@ -19,15 +19,15 @@ import {
     type MenuProps,
 } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useDeleteFloor } from "../api/hooks/useDeleteFloor";
-import { useGetFloorByLevelId } from "../api/hooks/useGetFloorByLevel";
-import { useGetLandmarkById } from "../api/hooks/useGetLandmarkById";
-import { useUpdateFloorAreas } from "../api/hooks/useUpdateFloorAreas";
-import { TEMP_ID_FORMAT } from "../constant";
-import DrawerVisibilityContext from "../store/context/DrawerVisibilityContext";
-import type { IFloor, IFloorPlanArea } from "../types/FloorPlan";
-import CustomActionButtons from "./CustomActionButtons";
-import FloorPlanEditor from "./floor-plan/FloorPlanEditor";
+import { useDeleteFloor } from "../../api/hooks/useDeleteFloor";
+import { useGetFloorByLevelId } from "../../api/hooks/useGetFloorByLevel";
+import { useGetLandmarkById } from "../../api/hooks/useGetLandmarkById";
+import { useUpdateFloorAreas } from "../../api/hooks/useUpdateFloorAreas";
+import { TEMP_ID_FORMAT } from "../../constant";
+import DrawerVisibilityContext from "../../store/context/DrawerVisibilityContext";
+import type { IFloor, IFloorPlanArea } from "../../types/FloorPlan";
+import CustomActionButtons from "../CustomActionButtons";
+import FloorPlanEditor from "./FloorPlanEditor";
 
 const { TextArea } = Input;
 
